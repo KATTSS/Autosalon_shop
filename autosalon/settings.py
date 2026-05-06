@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'core',
     'faq',
     'news',
+    'products',
     'promo',
     'reviews',
     'vacancies',
