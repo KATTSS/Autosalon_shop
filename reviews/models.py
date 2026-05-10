@@ -15,6 +15,12 @@ class Review(models.Model):
     )
     created_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата публикации')
     is_moderated = models.BooleanField(default=False, verbose_name='Промодерирован')
+    product = models.ForeignKey(
+        'products.Product',
+        on_delete=models.CASCADE,
+        verbose_name='Товар',
+        null=True, 
+    )
 
     class Meta:
         verbose_name = 'Отзыв'
