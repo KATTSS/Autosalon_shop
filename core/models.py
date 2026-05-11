@@ -9,14 +9,18 @@ class CompanyInfo(models.Model):
     logo = models.ImageField(upload_to='company/', verbose_name='Логотип', blank=True, null=True)
     history = models.TextField(verbose_name='История компании')
     requisites = models.TextField(verbose_name='Реквизиты')
-    video_url = models.URLField(verbose_name='Ссылка на видео', blank=True, null=True)
-
+    
     class Meta:
         verbose_name = 'Информация о компании'
         verbose_name_plural = 'Информация о компании'
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.pk and CompanyInfo.objects.exists():
+            raise ValueError("Может существовать только одна компания. Редактируйте существующую.")
+        super().save(*args, **kwargs)
 
 
 class Employee(models.Model):
@@ -49,8 +53,7 @@ class PickupPoint(models.Model):
     address = models.CharField(max_length=300, verbose_name='Адрес')
     phone = models.CharField(max_length=20, verbose_name='Телефон')
     working_hours = models.CharField(max_length=200, verbose_name='Часы работы')
-    description = models.TextField(verbose_name='Описание', blank=True)
-
+   
     class Meta:
         verbose_name = 'Точка самовывоза'
         verbose_name_plural = 'Точки самовывоза'

@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MinValueValidator
 
 class Sale(models.Model):
     """Продажа"""
@@ -59,12 +60,7 @@ class SaleItem(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Товар'
     )
-    quantity = models.PositiveIntegerField(verbose_name='Количество')
-    unit_price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        verbose_name='Цена за единицу'
-    )
+    quantity = models.PositiveIntegerField(verbose_name='Количество', validators=[MinValueValidator(1)])
 
     class Meta:
         verbose_name = 'Проданный товар'
@@ -74,9 +70,14 @@ class SaleItem(models.Model):
         return f'{self.product.name} x{self.quantity}'
 
     @property
+    def unit_price(self):
+        """Цена за единицу из товара"""
+        return self.product.price
+
+    @property
     def total_price(self):
         """Цена проданного товара"""
-        return self.quantity * self.unit_price
+        return self.quantity * self.product.price
 
     def save(self, *args, **kwargs):
         """Сохранение данных о проданном товаре"""
@@ -87,3 +88,4 @@ class SaleItem(models.Model):
             else:
                 raise ValueError(f'Недостаточно товара "{self.product.name}" на складе!')
         super().save(*args, **kwargs)
+        self.sale.calculate_total()

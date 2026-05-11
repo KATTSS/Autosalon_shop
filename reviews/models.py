@@ -11,7 +11,8 @@ class Review(models.Model):
     text = models.TextField(verbose_name='Текст отзыва')
     rating = models.PositiveIntegerField(
         verbose_name='Оценка',
-        validators=[MinValueValidator(1), MaxValueValidator(5)]
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        choices=[(i, str(i)) for i in range(0, 6)]
     )
     created_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата публикации')
     is_moderated = models.BooleanField(default=False, verbose_name='Промодерирован')
@@ -20,6 +21,7 @@ class Review(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Товар',
         null=True, 
+        blank=True
     )
 
     class Meta:

@@ -2,7 +2,7 @@ from django.db import models
 
 class Manufacturer(models.Model):
     """Изготовитель"""
-    name = models.CharField(max_length=200, verbose_name='Название')
+    name = models.CharField(max_length=200, verbose_name='Название', unique=True)
     country = models.CharField(max_length=100, verbose_name='Страна', blank=True)
 
     class Meta:
