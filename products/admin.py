@@ -12,10 +12,12 @@ class ProductTypeAdmin(admin.ModelAdmin):
 class SaleInline(admin.TabularInline):
     model = Sale
     extra = 0
-    fields = ('sale_date', 'total_amount', 'pickup_point')
-    readonly_fields = ('sale_date', 'total_amount', 'pickup_point')
+    fields = ('sale_date', 'total_amount', 'pickup_point', 'promo_code')
+    readonly_fields = ('sale_date', 'total_amount', 'pickup_point', 'promo_code')
     can_delete = False
     show_change_link = True
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Customer)
@@ -43,13 +45,19 @@ class ProductAdminForm(forms.ModelForm):
 
     def clean_article(self):
         article = self.cleaned_data.get('article')
-        existing = Product.objects.filter(article=article).first()
-        if existing and existing.pk != self.instance.pk:
-            self.instance.name = existing.name
-            self.instance.price = existing.price
-            self.instance.manufacturer = existing.manufacturer
-            self.instance.product_type = existing.product_type
-            self.instance.description = existing.description
+        if article:
+            existing = Product.objects.filter(article=article).first()
+            if existing and existing.pk != self.instance.pk:
+                self.instance.name = existing.name
+                self.instance.price = existing.price
+                self.instance.manufacturer = existing.manufacturer
+                self.instance.product_type = existing.product_type
+                self.instance.description = existing.description
+                self.cleaned_data['name'] = existing.name
+                self.cleaned_data['price'] = existing.price
+                self.cleaned_data['manufacturer'] = existing.manufacturer
+                self.cleaned_data['product_type'] = existing.product_type
+                self.cleaned_data['description'] = existing.description
         return article
 
 
@@ -59,20 +67,31 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = ('article', 'name', 'product_type', 'price', 'manufacturer', 'display_suppliers', 'stock', 'description')
     list_filter = ('product_type', 'manufacturer', 'suppliers', 'stock')
     inlines = [SupplyInline]
+    readonly_fields = ('stock',)
 
 
 class SaleItemInline(admin.TabularInline):
     model = SaleItem
     extra = 1
-    fields = ('product', 'quantity')
+    fields = ('product', 'quantity', 'unit_price', 'total_price', 'discounted_total_price')
+    readonly_fields = ('unit_price', 'total_price', 'discounted_total_price')
     
+    def has_change_permission(self, request, obj=None):
+        if obj and obj.sale_id:
+            return False
+        return True
+    
+    def has_delete_permission(self, request, obj=None):
+        if obj and obj.sale_id:
+            return False
+        return True
 
 @admin.register(Sale)
 class SaleAdmin(admin.ModelAdmin):
     list_display = ('id', 'sale_date', 'pickup_point', 'total_amount', 'promo_code', 'customer')
     list_filter = ('sale_date', 'pickup_point', 'promo_code', 'customer')
     inlines = [SaleItemInline]
-    readonly_fields = ('total_amount',)
+    readonly_fields = ('total_amount', 'sale_date')
 
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
@@ -82,12 +101,26 @@ class SaleAdmin(admin.ModelAdmin):
         if form.instance.pk:
             form.instance.calculate_total()
 
+    def has_change_permission(self, request, obj=None):
+        if obj:
+            return False
+        return True
+
 
 @admin.register(SaleItem)
 class SaleItemAdmin(admin.ModelAdmin):
-    list_display = ('product', 'sale', 'quantity', 'unit_price', 'total_price')
-    list_filter = ('product',)
-    readonly_fields = ('unit_price', 'total_price')
+    list_display = ('product', 'sale', 'quantity', 'unit_price', 'total_price', 'discounted_total_price', 'discount_amount')
+    list_filter = ('product', 'sale__sale_date')
+    readonly_fields = ('product', 'sale', 'quantity', 'unit_price', 'total_price', 'discounted_total_price', 'discount_amount')
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class SupplierSupplyInline(admin.TabularInline):

@@ -42,3 +42,32 @@ class Product(models.Model):
         """Отображение поставщиков в админке"""
         return ', '.join([s.name for s in self.suppliers.all()[:3]])
     display_suppliers.short_description = 'Поставщики'
+
+    def calculate_stock(self):
+        """Расчет остатка на складе на основе поставок и продаж"""
+        from django.db.models import Sum
+        from .supplies import Supply
+        from .sales import SaleItem
+        
+        
+        total_supplied = Supply.objects.filter(
+            product=self
+        ).aggregate(
+            total=Sum('quantity')
+        )['total'] or 0
+        
+        
+        total_sold = SaleItem.objects.filter(
+            product=self
+        ).aggregate(
+            total=Sum('quantity')
+        )['total'] or 0
+        
+        return total_supplied - total_sold
+    
+    def save(self, *args, **kwargs):
+        """Переопределяем save для автоматического расчета stock"""
+        if self.pk:
+            
+            self.stock = self.calculate_stock()
+        super().save(*args, **kwargs)

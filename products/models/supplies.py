@@ -43,8 +43,8 @@ class Supply(models.Model):
         return f'{self.product.name} от {self.supplier.name} — {self.quantity} шт. ({self.purchase_date})'
 
     def save(self, *args, **kwargs):
-        """Сохранение данных о поставке"""
-        if self.pk is None:
-            self.product.stock += self.quantity
-            self.product.save()
+        """Сохранение данных о поставке с пересчетом stock"""
         super().save(*args, **kwargs)
+        
+        self.product.stock = self.product.calculate_stock()
+        self.product.save(update_fields=['stock'])

@@ -1,5 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.db import transaction 
+from decimal import Decimal
 
 class Sale(models.Model):
     """Продажа"""
@@ -42,7 +44,8 @@ class Sale(models.Model):
         """Расчёт стоимости продажи"""
         total = sum(item.total_price for item in self.items.all())
         if self.promo_code and self.promo_code.is_valid():
-            total *= (1 - self.promo_code.discount_percent / 100)
+            discount = Decimal(self.promo_code.discount_percent) / Decimal('100')
+            total *= (Decimal('1') - discount)
         self.total_amount = total
         self.save()
 
@@ -79,13 +82,37 @@ class SaleItem(models.Model):
         """Цена проданного товара"""
         return self.quantity * self.product.price
 
+    @property
+    def discounted_total_price(self):
+        """Цена проданного товара с учетом скидки по промокоду"""
+        if self.sale.promo_code and self.sale.promo_code.is_valid():
+            discount = Decimal(str(self.sale.promo_code.discount_percent)) / Decimal('100')
+            return self.total_price * (Decimal('1') - discount)
+        return self.total_price
+
+
+    @property
+    def discount_amount(self):
+        """Сумма скидки на этот товар"""
+        return self.total_price - self.discounted_total_price
+
     def save(self, *args, **kwargs):
-        """Сохранение данных о проданном товаре"""
-        if self.pk is None:
-            if self.product.stock >= self.quantity:
-                self.product.stock -= self.quantity
-                self.product.save()
+        """Сохранение данных о проданном товаре с пересчетом stock"""
+        with transaction.atomic():
+            if self.pk is None:
+                current_stock = self.product.calculate_stock()
+                if current_stock >= self.quantity:
+                    super().save(*args, **kwargs)
+                    self.product.stock = self.product.calculate_stock()
+                    self.product.save(update_fields=['stock'])
+                    self.sale.calculate_total()
+                else:
+                    raise ValueError(
+                        f'Недостаточно товара "{self.product.name}" на складе! '
+                        f'Доступно: {current_stock}, требуется: {self.quantity}'
+                    )
             else:
-                raise ValueError(f'Недостаточно товара "{self.product.name}" на складе!')
-        super().save(*args, **kwargs)
-        self.sale.calculate_total()
+                super().save(*args, **kwargs)
+                self.product.stock = self.product.calculate_stock()
+                self.product.save(update_fields=['stock'])
+                self.sale.calculate_total()
