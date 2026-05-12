@@ -1,0 +1,60 @@
+<!-- core/templates/core/product_detail.html -->
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ product.name }} — Автомагазин</title>
+</head>
+
+<body>
+    <a href="{% url 'core:catalog' %}">← Назад в каталог</a>
+
+    <article>
+        <h1>{{ product.name }}</h1>
+        <p><strong>Артикул:</strong> {{ product.article }}</p>
+        <p><strong>Тип:</strong> {{ product.product_type.name }}</p>
+        <p><strong>Производитель:</strong> {{ product.manufacturer.name }}</p>
+        <p><strong>Страна:</strong> {{ product.manufacturer.country }}</p>
+        <p><strong>Цена:</strong> {{ product.price }} руб.</p>
+        <p><strong>В наличии:</strong> {{ product.stock }} шт.</p>
+
+        {% if product.description %}
+        <div class="description">
+            <h3>Описание:</h3>
+            <p>{{ product.description }}</p>
+        </div>
+        {% endif %}
+
+        <div class="suppliers">
+            <h3>Поставщики:</h3>
+            <p>{{ product.display_suppliers }}</p>
+        </div>
+
+        {% if product.stock > 0 %}
+        <form method="post" action="{% url 'core:add_to_cart' product_id=product.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'core:product_detail' pk=product.id %}">
+            <label>Количество: <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}"></label>
+            <button type="submit">Добавить в корзину</button>
+        </form>
+        {% else %}
+        <p class="out-of-stock">Нет в наличии</p>
+        {% endif %}
+    </article>
+
+    {% if related_products %}
+    <section>
+        <h2>Похожие товары</h2>
+        {% for related in related_products %}
+        <div>
+            <h3>{{ related.name }}</h3>
+            <p>{{ related.price }} руб.</p>
+            <a href="{% url 'core:product_detail' pk=related.id %}">Смотреть</a>
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+</body>
+
+</html>

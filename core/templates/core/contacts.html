@@ -1,0 +1,47 @@
+<!-- core/templates/core/contacts.html -->
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Контакты — Автомагазин</title>
+</head>
+
+<body>
+    <h1>Контакты</h1>
+
+    {% if employees %}
+    <section class="employees">
+        <h2>Наши сотрудники</h2>
+        {% for employee in employees %}
+        <div class="employee-card">
+            {% if employee.photo %}
+            <img src="{{ employee.photo.url }}" alt="{{ employee.full_name }}">
+            {% endif %}
+            <h3>{{ employee.full_name }}</h3>
+            <p><strong>Должность:</strong> {{ employee.position }}</p>
+            <p><strong>Телефон:</strong> {{ employee.phone }}</p>
+            <p><strong>Email:</strong> {{ employee.email }}</p>
+            {% if employee.description %}
+            <p><strong>Описание:</strong> {{ employee.description }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if pickup_points %}
+    <section class="pickup-points">
+        <h2>Точки самовывоза</h2>
+        {% for point in pickup_points %}
+        <div class="pickup-point">
+            <h3>{{ point.address }}</h3>
+            <p><strong>Телефон:</strong> {{ point.phone }}</p>
+            <p><strong>Часы работы:</strong> {{ point.working_hours }}</p>
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+</body>
+
+</html>

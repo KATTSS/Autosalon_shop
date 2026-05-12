@@ -1,0 +1,91 @@
+<!-- core/templates/core/catalog.html -->
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Каталог товаров — Автомагазин</title>
+</head>
+
+<body>
+    <h1>Каталог товаров</h1>
+
+    <!-- Фильтры -->
+    <div class="filters">
+        <h2>Фильтры</h2>
+        <form method="get" action="{% url 'core:catalog' %}">
+            <!-- Поиск -->
+            <input type="text" name="q" placeholder="Поиск..." value="{{ current_filters.q }}">
+
+            <!-- Категория -->
+            <select name="category">
+                <option value="">Все категории</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}" {% if current_filters.category==category.id|stringformat:"s"
+                    %}selected{% endif %}>
+                    {{ category.name }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <!-- Цена -->
+            <input type="number" name="price_min" placeholder="Цена от" value="{{ current_filters.price_min }}">
+            <input type="number" name="price_max" placeholder="Цена до" value="{{ current_filters.price_max }}">
+
+            <!-- Сортировка -->
+            <select name="sort">
+                <option value="name" {% if current_filters.sort=="name" %}selected{% endif %}>По названию</option>
+                <option value="price_asc" {% if current_filters.sort=="price_asc" %}selected{% endif %}>Сначала дешевле
+                </option>
+                <option value="price_desc" {% if current_filters.sort=="price_desc" %}selected{% endif %}>Сначала дороже
+                </option>
+            </select>
+
+            <button type="submit">Применить</button>
+            <a href="{% url 'core:catalog' %}">Сбросить</a>
+        </form>
+    </div>
+
+    <!-- Список товаров -->
+    <div class="product-grid">
+        {% for product in products %}
+        <div class="product-card">
+            <h3>{{ product.name }}</h3>
+            <p>Артикул: {{ product.article }}</p>
+            <p>Тип: {{ product.product_type.name }}</p>
+            <p>Производитель: {{ product.manufacturer.name }}</p>
+            <p>Цена: {{ product.price }} руб.</p>
+            <p>В наличии: {{ product.stock }} шт.</p>
+            <a href="{% url 'core:product_detail' pk=product.id %}">Подробнее</a>
+
+            <form method="post" action="{% url 'core:add_to_cart' product_id=product.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}">
+                <button type="submit">В корзину</button>
+            </form>
+        </div>
+        {% empty %}
+        <p>Товары не найдены</p>
+        {% endfor %}
+    </div>
+
+    <!-- Пагинация -->
+    {% if is_paginated %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+        <a
+            href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">←</a>
+        {% endif %}
+
+        <span>Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+        <a
+            href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">→</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</body>
+
+</html>

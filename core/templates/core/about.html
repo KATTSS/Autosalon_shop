@@ -1,0 +1,36 @@
+<!-- core/templates/core/about.html -->
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>О компании — Автомагазин</title>
+</head>
+
+<body>
+    <h1>О компании</h1>
+
+    {% if company %}
+    <div class="company-info">
+        <h2>{{ company.name }}</h2>
+
+        {% if company.logo %}
+        <img src="{{ company.logo.url }}" alt="Логотип {{ company.name }}">
+        {% endif %}
+
+        <div class="history">
+            <h3>История компании</h3>
+            <p>{{ company.history }}</p>
+        </div>
+
+        <div class="requisites">
+            <h3>Реквизиты</h3>
+            <p>{{ company.requisites }}</p>
+        </div>
+    </div>
+    {% else %}
+    <p>Информация о компании временно недоступна</p>
+    {% endif %}
+</body>
+
+</html>

@@ -1,0 +1,60 @@
+<!-- core/templates/core/profile.html -->
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Личный кабинет — Автомагазин</title>
+</head>
+
+<body>
+    <h1>Личный кабинет</h1>
+
+    <div class="user-info">
+        <h2>Информация о пользователе</h2>
+        <p><strong>Имя пользователя:</strong> {{ user.username }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Дата регистрации:</strong> {{ user.date_joined|date:"d/m/Y" }}</p>
+
+        {% if customer %}
+        <p><strong>Телефон:</strong> {{ customer.phone }}</p>
+        <p><strong>Всего заказов:</strong> {{ total_orders }}</p>
+        {% endif %}
+    </div>
+
+    <div class="actions">
+        <ul>
+            <li><a href="{% url 'core:order_history' %}">История заказов</a></li>
+            <li><a href="{% url 'core:cart' %}">Корзина</a></li>
+            <li><a href="{% url 'core:logout' %}">Выйти</a></li>
+        </ul>
+    </div>
+
+    {% if last_orders %}
+    <div class="last-orders">
+        <h2>Последние заказы</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>№ заказа</th>
+                    <th>Дата</th>
+                    <th>Сумма</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in last_orders %}
+                <tr>
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.sale_date|date:"d/m/Y H:i" }}</td>
+                    <td>{{ order.total_amount }} руб.</td>
+                    <td><a href="#">Подробнее</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</body>
+
+</html>
