@@ -79,8 +79,8 @@ class ProductAdmin(admin.ModelAdmin):
 class SaleItemInline(admin.TabularInline):
     model = SaleItem
     extra = 1
-    fields = ('product', 'quantity', 'unit_price', 'total_price', 'discounted_total_price')
-    readonly_fields = ('unit_price', 'total_price', 'discounted_total_price')
+    fields = ('product', 'quantity', 'unit_price', 'total_price', 'discounted_total_price', 'discount_amount')
+    readonly_fields = ('unit_price','total_price', 'discounted_total_price', 'discount_amount')
     
     def has_change_permission(self, request, obj=None):
         if obj and obj.sale_id:
@@ -94,11 +94,15 @@ class SaleItemInline(admin.TabularInline):
 
 @admin.register(Sale)
 class SaleAdmin(admin.ModelAdmin):
-    list_display = ('id', 'sale_date_user', 'sale_date_utc', 'pickup_point', 'total_amount', 'promo_code', 'customer')
+    list_display = (
+        'id', 'sale_date_user', 'sale_date_utc', 
+        'pickup_point', 'total_amount', 'discounted_total_amount',
+        'promo_code', 'customer'
+    )
     list_filter = ('sale_date', 'pickup_point', 'promo_code', 'customer')
     inlines = [SaleItemInline]
-    readonly_fields = ('total_amount', 'sale_date')
-
+    readonly_fields = ('total_amount', 'discounted_total_amount', 'sale_date')
+    
     def sale_date_user(self, obj):
         """Дата продажи в часовом поясе пользователя (UTC+3)"""
         tz = timezone.get_fixed_timezone(180)
@@ -125,12 +129,17 @@ class SaleAdmin(admin.ModelAdmin):
             return False
         return True
 
-
 @admin.register(SaleItem)
 class SaleItemAdmin(admin.ModelAdmin):
-    list_display = ('product', 'sale', 'quantity', 'unit_price', 'total_price', 'discounted_total_price', 'discount_amount')
+    list_display = (
+        'product', 'sale', 'quantity', 'unit_price', 
+        'total_price', 'discounted_total_price', 'discount_amount'
+    )
     list_filter = ('product', 'sale__sale_date')
-    readonly_fields = ('product', 'sale', 'quantity', 'unit_price', 'total_price', 'discounted_total_price', 'discount_amount')
+    readonly_fields = (
+        'product', 'sale', 'quantity', 'unit_price', 
+        'total_price', 'discounted_total_price', 'discount_amount'
+    )
     
     def has_add_permission(self, request):
         return False
