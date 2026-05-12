@@ -6,7 +6,7 @@ from .suppliers import Supplier
 
 class Product(models.Model):
     """Товар"""
-    article = models.CharField(max_length=50, verbose_name='Артикул')
+    article = models.CharField(max_length=50, verbose_name='Артикул', unique=True)
     name = models.CharField(max_length=250, verbose_name='Название')
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Цена', validators=[MinValueValidator(0.0)])
     manufacturer = models.ForeignKey(
