@@ -1,5 +1,7 @@
 from django.contrib import admin
+from django.utils import timezone
 from .models import CompanyInfo, Employee, PickupPoint
+
 
 @admin.register(CompanyInfo)
 class CompanyInfoAdmin(admin.ModelAdmin):
@@ -11,11 +13,18 @@ class CompanyInfoAdmin(admin.ModelAdmin):
             return False
         return True
 
+
 @admin.register(Employee)
-class EmplouyeeAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'position', 'phone', 'email','photo', 'description', 'user')
-    list_filter = ('position', )
-    fields = [('full_name', 'position', 'photo', 'user'), ('phone', 'email'), 'description']
+class EmployeeAdmin(admin.ModelAdmin):
+    list_display = ('full_name', 'position', 'phone', 'email', 'birth_date', 'age', 'photo', 'description', 'user')
+    list_filter = ('position', 'birth_date')
+    search_fields = ('full_name', 'phone', 'email')
+    fields = [('full_name', 'position', 'photo', 'user'), ('phone', 'email'), ('birth_date',), 'description']
+    
+    def age(self, obj):
+        return obj.age
+    age.short_description = 'Возраст'
+
 
 @admin.register(PickupPoint)
 class PickupPointAdmin(admin.ModelAdmin):

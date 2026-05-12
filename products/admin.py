@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django import forms
+from django.utils import timezone
 from .models import ProductType, Customer, Manufacturer, Product, Sale, SaleItem, Supplier, Supply
 
 
@@ -22,9 +23,14 @@ class SaleInline(admin.TabularInline):
 
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):
-    list_display = ('user', 'phone', 'display_total_purchases')
+    list_display = ('user', 'phone', 'birth_date', 'age', 'display_total_purchases')
+    list_filter = ('birth_date',)
+    search_fields = ('user__username', 'phone')
     inlines = [SaleInline]
-
+    
+    def age(self, obj):
+        return obj.age
+    age.short_description = 'Возраст'
 
 @admin.register(Manufacturer)
 class ManufacturerAdmin(admin.ModelAdmin):
@@ -88,10 +94,23 @@ class SaleItemInline(admin.TabularInline):
 
 @admin.register(Sale)
 class SaleAdmin(admin.ModelAdmin):
-    list_display = ('id', 'sale_date', 'pickup_point', 'total_amount', 'promo_code', 'customer')
+    list_display = ('id', 'sale_date_user', 'sale_date_utc', 'pickup_point', 'total_amount', 'promo_code', 'customer')
     list_filter = ('sale_date', 'pickup_point', 'promo_code', 'customer')
     inlines = [SaleItemInline]
     readonly_fields = ('total_amount', 'sale_date')
+
+    def sale_date_user(self, obj):
+        """Дата продажи в часовом поясе пользователя (UTC+3)"""
+        tz = timezone.get_fixed_timezone(180)
+        user_time = obj.sale_date.astimezone(tz)
+        return user_time.strftime('%d/%m/%Y %H:%M:%S')
+    sale_date_user.short_description = 'Дата продажи (МСК)'
+    
+    def sale_date_utc(self, obj):
+        """Дата продажи в UTC"""
+        return obj.sale_date.strftime('%d/%m/%Y %H:%M:%S')
+    sale_date_utc.short_description = 'Дата продажи (UTC)'
+
 
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
