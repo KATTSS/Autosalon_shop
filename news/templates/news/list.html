@@ -1,20 +1,42 @@
-<!DOCTYPE html>
-<html>
+{% extends 'base.html' %}
 
-<head>
-    <title>Новости</title>
-</head>
+{% block title %}Новости — Автомагазин{% endblock %}
 
-<body>
-    <h1>Новости</h1>
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'core:home' %}">Главная</a>
+    <span>→</span>
+    <span>Новости</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>Новости</h1>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; margin-top: 20px;">
     {% for article in articles %}
-    <div>
-        <h2><a href="{% url 'news:detail' slug=article.slug %}">{{ article.title }}</a></h2>
-        <p>{{ article.short_text }}</p>
-        <img src="{{ article.image.url }}" alt="{{ article.title }}">
-        <p>{{ article.published_date|date:"d/m/Y" }}</p>
-    </div>
+    <article style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden; transition: box-shadow 0.3s;">
+        {% if article.image %}
+        <img src="{{ article.image.url }}" alt="{{ article.title }}"
+            style="width: 100%; height: 200px; object-fit: cover;">
+        {% endif %}
+        <div style="padding: 20px;">
+            <h2>
+                <a href="{% url 'news:detail' slug=article.slug %}" style="color: #333; text-decoration: none;">
+                    {{ article.title }}
+                </a>
+            </h2>
+            <p style="color: #666; margin: 10px 0;">{{ article.short_text }}</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                <span style="color: #999; font-size: 14px;">{{ article.published_date|date:"d/m/Y" }}</span>
+                <a href="{% url 'news:detail' slug=article.slug %}" class="btn btn-primary" style="padding: 8px 20px;">
+                    Читать далее →
+                </a>
+            </div>
+        </div>
+    </article>
+    {% empty %}
+    <p style="grid-column: 1/-1; text-align: center; color: #666;">Новостей пока нет</p>
     {% endfor %}
-</body>
-
-</html>
+</div>
+{% endblock %}

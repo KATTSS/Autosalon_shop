@@ -1,21 +1,67 @@
-<!DOCTYPE html>
-<html>
+{% extends 'base.html' %}
 
-<head>
-    <title>Вакансии</title>
-</head>
+{% block title %}Вакансии — Автомагазин{% endblock %}
 
-<body>
-    <h1>Вакансии</h1>
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'core:home' %}">Главная</a>
+    <span>→</span>
+    <span>Вакансии</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>Вакансии</h1>
+
+{% if vacancies %}
+<div style="display: grid; gap: 25px; margin-top: 20px;">
     {% for vacancy in vacancies %}
-    <div>
-        <h2>{{ vacancy.title }}</h2>
-        <p>Зарплата: {{ vacancy.salary }}</p>
-        <p>Требования: {{ vacancy.requirements }}</p>
-        <p>Условия: {{ vacancy.conditions }}</p>
-        <p>{{ vacancy.description }}</p>
+    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 25px;">
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+            <h2 style="margin: 0; color: #2c3e50;">{{ vacancy.title }}</h2>
+            {% if vacancy.salary %}
+            <span style="background: #27ae60; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold;">
+                {{ vacancy.salary }}
+            </span>
+            {% endif %}
+        </div>
+
+        {% if vacancy.requirements %}
+        <div style="margin-top: 20px;">
+            <h3 style="color: #e74c3c;">Требования:</h3>
+            <p style="white-space: pre-line;">{{ vacancy.requirements }}</p>
+        </div>
+        {% endif %}
+
+        {% if vacancy.conditions %}
+        <div style="margin-top: 15px;">
+            <h3 style="color: #3498db;">Условия работы:</h3>
+            <p style="white-space: pre-line;">{{ vacancy.conditions }}</p>
+        </div>
+        {% endif %}
+
+        {% if vacancy.description %}
+        <div style="margin-top: 15px;">
+            <h3>Описание:</h3>
+            <p style="white-space: pre-line;">{{ vacancy.description }}</p>
+        </div>
+        {% endif %}
+
+        <p style="color: #999; font-size: 14px; margin-top: 15px;">
+            Создана: {{ vacancy.created_date|date:"d/m/Y" }}
+        </p>
     </div>
     {% endfor %}
-</body>
+</div>
+{% else %}
+<div style="text-align: center; padding: 40px;">
+    <p style="font-size: 18px; color: #666;">На данный момент вакансий нет</p>
+    <a href="{% url 'core:contacts' %}" class="btn btn-primary" style="margin-top: 20px;">Свяжитесь с нами</a>
+</div>
+{% endif %}
 
-</html>
+<div style="margin-top: 30px;">
+    <a href="{% url 'core:contacts' %}" class="btn btn-primary">Контакты</a>
+    <a href="{% url 'core:about' %}" class="btn btn-secondary">О компании</a>
+</div>
+{% endblock %}

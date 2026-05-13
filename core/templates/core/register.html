@@ -1,175 +1,109 @@
-<!DOCTYPE html>
-<html lang="ru">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Регистрация — Автомагазин</title>
-    <style>
-        .form-group {
-            margin-bottom: 15px;
-        }
+{% block title %}Регистрация — Автомагазин{% endblock %}
 
-        .form-group label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'core:home' %}">Главная</a>
+    <span>→</span>
+    <span>Регистрация</span>
+</div>
+{% endblock %}
 
-        .form-group input {
-            width: 300px;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
-        .form-group .help-text {
-            font-size: 12px;
-            color: #666;
-            margin-top: 3px;
-        }
-
-        .error {
-            color: red;
-            font-size: 13px;
-            margin-top: 3px;
-        }
-
-        .messages {
-            margin-bottom: 20px;
-        }
-
-        .alert {
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-        }
-
-        .alert.error {
-            background-color: #ffe6e6;
-            border: 1px solid #ff9999;
-            color: #cc0000;
-        }
-
-        .alert.success {
-            background-color: #e6ffe6;
-            border: 1px solid #99ff99;
-            color: #006600;
-        }
-
-        button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        button:hover {
-            background-color: #45a049;
-        }
-
-        .links {
-            margin-top: 20px;
-        }
-    </style>
-</head>
-
-<body>
+{% block content %}
+<div style="max-width: 500px; margin: 0 auto;">
     <h1>Регистрация</h1>
-
-    {% if messages %}
-    <div class="messages">
-        {% for message in messages %}
-        <div class="alert {{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    </div>
-    {% endif %}
 
     <form method="post" action="{% url 'core:register' %}" novalidate>
         {% csrf_token %}
 
-        <!-- Имя пользователя -->
-        <div class="form-group">
-            <label for="{{ form.username.id_for_label }}">Имя пользователя:</label>
+        
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: bold;">
+                Имя пользователя:
+            </label>
             {{ form.username }}
             {% if form.username.help_text %}
-            <div class="help-text">{{ form.username.help_text }}</div>
+            <div style="font-size: 12px; color: #666; margin-top: 4px;">{{ form.username.help_text }}</div>
             {% endif %}
             {% if form.username.errors %}
-            <div class="error">{{ form.username.errors|join:", " }}</div>
+            <div style="color: #e74c3c; font-size: 13px; margin-top: 4px;">{{ form.username.errors|join:", " }}</div>
             {% endif %}
         </div>
 
-        <!-- Email -->
-        <div class="form-group">
-            <label for="{{ form.email.id_for_label }}">Email:</label>
+       
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: bold;">
+                Email:
+            </label>
             {{ form.email }}
-            {% if form.email.help_text %}
-            <div class="help-text">{{ form.email.help_text }}</div>
-            {% endif %}
             {% if form.email.errors %}
-            <div class="error">{{ form.email.errors|join:", " }}</div>
+            <div style="color: #e74c3c; font-size: 13px; margin-top: 4px;">{{ form.email.errors|join:", " }}</div>
             {% endif %}
         </div>
 
-        <!-- Телефон -->
-        <div class="form-group">
-            <label for="{{ form.phone.id_for_label }}">Телефон:</label>
+        
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: bold;">
+                Телефон:
+            </label>
             {{ form.phone }}
             {% if form.phone.help_text %}
-            <div class="help-text">{{ form.phone.help_text }}</div>
+            <div style="font-size: 12px; color: #666; margin-top: 4px;">{{ form.phone.help_text }}</div>
             {% endif %}
             {% if form.phone.errors %}
-            <div class="error">{{ form.phone.errors|join:", " }}</div>
+            <div style="color: #e74c3c; font-size: 13px; margin-top: 4px;">{{ form.phone.errors|join:", " }}</div>
             {% endif %}
         </div>
 
-        <!-- Дата рождения -->
-        <div class="form-group">
-            <label for="{{ form.birth_date.id_for_label }}">Дата рождения:</label>
+        
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: bold;">
+                Дата рождения:
+            </label>
             {{ form.birth_date }}
             {% if form.birth_date.help_text %}
-            <div class="help-text">{{ form.birth_date.help_text }}</div>
+            <div style="font-size: 12px; color: #666; margin-top: 4px;">{{ form.birth_date.help_text }}</div>
             {% endif %}
             {% if form.birth_date.errors %}
-            <div class="error">{{ form.birth_date.errors|join:", " }}</div>
+            <div style="color: #e74c3c; font-size: 13px; margin-top: 4px;">{{ form.birth_date.errors|join:", " }}</div>
             {% endif %}
         </div>
 
-        <!-- Пароль -->
-        <div class="form-group">
-            <label for="{{ form.password1.id_for_label }}">Пароль:</label>
+        
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: bold;">
+                Пароль:
+            </label>
             {{ form.password1 }}
             {% if form.password1.help_text %}
-            <div class="help-text">{{ form.password1.help_text }}</div>
+            <div style="font-size: 12px; color: #666; margin-top: 4px;">{{ form.password1.help_text }}</div>
             {% endif %}
             {% if form.password1.errors %}
-            <div class="error">{{ form.password1.errors|join:", " }}</div>
+            <div style="color: #e74c3c; font-size: 13px; margin-top: 4px;">{{ form.password1.errors|join:", " }}</div>
             {% endif %}
         </div>
 
-        <!-- Подтверждение пароля -->
-        <div class="form-group">
-            <label for="{{ form.password2.id_for_label }}">Подтверждение пароля:</label>
+        
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: bold;">
+                Подтверждение пароля:
+            </label>
             {{ form.password2 }}
-            {% if form.password2.help_text %}
-            <div class="help-text">{{ form.password2.help_text }}</div>
-            {% endif %}
             {% if form.password2.errors %}
-            <div class="error">{{ form.password2.errors|join:", " }}</div>
+            <div style="color: #e74c3c; font-size: 13px; margin-top: 4px;">{{ form.password2.errors|join:", " }}</div>
             {% endif %}
         </div>
 
-        <button type="submit">Зарегистрироваться</button>
+        <button type="submit" class="btn btn-success" style="width: 100%; padding: 12px; font-size: 16px;">
+            Зарегистрироваться
+        </button>
     </form>
 
-    <div class="links">
+    <div style="text-align: center; margin-top: 20px;">
         <p>Уже есть аккаунт? <a href="{% url 'core:login' %}">Войти</a></p>
-        <p><a href="{% url 'core:home' %}">На главную</a></p>
+        <p><a href="{% url 'core:home' %}">← На главную</a></p>
     </div>
-</body>
+</div>
 
-</html>
+{% endblock %}

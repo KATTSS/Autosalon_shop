@@ -25,7 +25,7 @@
             padding: 0 20px;
         }
 
-        /* Шапка */
+    
         header {
             background: #2c3e50;
             color: white;
@@ -53,7 +53,7 @@
             color: #3498db;
         }
 
-        /* Навигация */
+    
         nav ul {
             list-style: none;
             display: flex;
@@ -73,7 +73,7 @@
             background: #34495e;
         }
 
-        /* Блок авторизации */
+     
         .auth-block {
             display: flex;
             gap: 15px;
@@ -101,7 +101,7 @@
             text-decoration: none !important;
         }
 
-        /* Сообщения */
+   
         .messages {
             margin: 20px 0;
         }
@@ -136,7 +136,7 @@
             border: 1px solid #bee5eb;
         }
 
-        /* Основной контент */
+   
         main {
             background: white;
             padding: 30px;
@@ -146,7 +146,7 @@
             min-height: 400px;
         }
 
-        /* Подвал */
+     
         footer {
             background: #2c3e50;
             color: white;
@@ -174,7 +174,7 @@
             margin-bottom: 10px;
         }
 
-        /* Хлебные крошки */
+       
         .breadcrumbs {
             margin-bottom: 20px;
             padding: 10px 0;
@@ -195,7 +195,7 @@
             margin: 0 5px;
         }
 
-        /* Кнопки */
+
         .btn {
             display: inline-block;
             padding: 10px 20px;
@@ -247,11 +247,10 @@
 </head>
 
 <body>
-    <!-- Шапка с навигацией -->
     <header>
         <div class="container">
             <div class="logo">
-                <a href="{% url 'core:home' %}">🚗 Автомагазин</a>
+                <a href="{% url 'core:home' %}">Автомагазин</a>
             </div>
 
             <nav>
@@ -282,7 +281,6 @@
     </header>
 
     <div class="container">
-        <!-- Сообщения -->
         {% if messages %}
         <div class="messages">
             {% for message in messages %}
@@ -291,17 +289,15 @@
         </div>
         {% endif %}
 
-        <!-- Хлебные крошки -->
         {% block breadcrumbs %}{% endblock %}
 
-        <!-- Основной контент -->
         <main>
             {% block content %}
             {% endblock %}
         </main>
     </div>
 
-    <!-- Подвал -->
+    
     <footer>
         <div class="container">
             <div>

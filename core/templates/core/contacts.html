@@ -1,47 +1,60 @@
-<!-- core/templates/core/contacts.html -->
-<!DOCTYPE html>
-<html lang="ru">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Контакты — Автомагазин</title>
-</head>
+{% block title %}Контакты — Автомагазин{% endblock %}
 
-<body>
-    <h1>Контакты</h1>
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'core:home' %}">Главная</a>
+    <span>→</span>
+    <span>Контакты</span>
+</div>
+{% endblock %}
 
-    {% if employees %}
-    <section class="employees">
-        <h2>Наши сотрудники</h2>
+{% block content %}
+<h1>📞 Контакты</h1>
+
+{% if employees %}
+<section style="margin-top: 30px;">
+    <h2>Наши сотрудники</h2>
+    <div
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
         {% for employee in employees %}
-        <div class="employee-card">
+        <div style="border: 1px solid #ddd; padding: 20px; border-radius: 8px; text-align: center;">
             {% if employee.photo %}
-            <img src="{{ employee.photo.url }}" alt="{{ employee.full_name }}">
+            <img src="{{ employee.photo.url }}" alt="{{ employee.full_name }}"
+                style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 15px;">
             {% endif %}
             <h3>{{ employee.full_name }}</h3>
-            <p><strong>Должность:</strong> {{ employee.position }}</p>
-            <p><strong>Телефон:</strong> {{ employee.phone }}</p>
-            <p><strong>Email:</strong> {{ employee.email }}</p>
+            <p style="color: #3498db; font-weight: bold;">{{ employee.position }}</p>
+            <p>{{ employee.phone }}</p>
+            <p>{{ employee.email }}</p>
             {% if employee.description %}
-            <p><strong>Описание:</strong> {{ employee.description }}</p>
+            <p style="font-size: 14px; color: #666; margin-top: 10px;">{{ employee.description }}</p>
             {% endif %}
         </div>
         {% endfor %}
-    </section>
-    {% endif %}
+    </div>
+</section>
+{% endif %}
 
-    {% if pickup_points %}
-    <section class="pickup-points">
-        <h2>Точки самовывоза</h2>
+{% if pickup_points %}
+<section style="margin-top: 40px;">
+    <h2>Точки самовывоза</h2>
+    <div
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
         {% for point in pickup_points %}
-        <div class="pickup-point">
+        <div style="border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
             <h3>{{ point.address }}</h3>
-            <p><strong>Телефон:</strong> {{ point.phone }}</p>
-            <p><strong>Часы работы:</strong> {{ point.working_hours }}</p>
+            <p>{{ point.phone }}</p>
+            <p>{{ point.working_hours }}</p>
         </div>
         {% endfor %}
-    </section>
-    {% endif %}
-</body>
+    </div>
+</section>
+{% endif %}
 
-</html>
+<div style="margin-top: 30px;">
+    <a href="{% url 'core:about' %}" class="btn btn-primary">О компании</a>
+    <a href="{% url 'core:home' %}" class="btn btn-secondary">На главную</a>
+</div>
+{% endblock %}

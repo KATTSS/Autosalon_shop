@@ -1,11 +1,43 @@
-<!DOCTYPE html>
-<html>
-<head><title>{{ article.title }}</title></head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}{{ article.title }} — Автомагазин{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'core:home' %}">Главная</a>
+    <span>→</span>
+    <a href="{% url 'news:list' %}">Новости</a>
+    <span>→</span>
+    <span>{{ article.title|truncatechars:30 }}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<article>
+    <div style="margin-bottom: 20px;">
+        <a href="{% url 'news:list' %}" class="btn btn-secondary">← Назад к новостям</a>
+    </div>
+
     <h1>{{ article.title }}</h1>
-    <img src="{{ article.image.url }}" alt="{{ article.title }}">
-    <p>{{ article.full_text }}</p>
-    <p>Опубликовано: {{ article.published_date|date:"d/m/Y H:i" }}</p>
-    <a href="{% url 'news:list' %}">← Назад к новостям</a>
-</body>
-</html>
+
+    <p style="color: #999; font-size: 14px; margin: 15px 0;">
+        Опубликовано: {{ article.published_date|date:"d/m/Y H:i" }}
+        {% if article.updated_date != article.published_date %}
+        | Обновлено: {{ article.updated_date|date:"d/m/Y H:i" }}
+        {% endif %}
+    </p>
+
+    {% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.title }}"
+        style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px; margin: 20px 0;">
+    {% endif %}
+
+    <div style="font-size: 16px; line-height: 1.8; margin-top: 20px; white-space: pre-line;">
+        {{ article.full_text }}
+    </div>
+
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+        <a href="{% url 'news:list' %}" class="btn btn-primary">← Ко всем новостям</a>
+    </div>
+</article>
+{% endblock %}

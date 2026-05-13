@@ -1,60 +1,89 @@
-<!-- core/templates/core/product_detail.html -->
-<!DOCTYPE html>
-<html lang="ru">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>{{ product.name }} — Автомагазин</title>
-</head>
+{% block title %}{{ product.name }} — Автомагазин{% endblock %}
 
-<body>
-    <a href="{% url 'core:catalog' %}">← Назад в каталог</a>
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'core:home' %}">Главная</a>
+    <span>→</span>
+    <a href="{% url 'core:catalog' %}">Каталог</a>
+    <span>→</span>
+    <span>{{ product.name }}</span>
+</div>
+{% endblock %}
 
-    <article>
-        <h1>{{ product.name }}</h1>
-        <p><strong>Артикул:</strong> {{ product.article }}</p>
-        <p><strong>Тип:</strong> {{ product.product_type.name }}</p>
-        <p><strong>Производитель:</strong> {{ product.manufacturer.name }}</p>
-        <p><strong>Страна:</strong> {{ product.manufacturer.country }}</p>
-        <p><strong>Цена:</strong> {{ product.price }} руб.</p>
-        <p><strong>В наличии:</strong> {{ product.stock }} шт.</p>
+{% block content %}
+<div>
+    <a href="{% url 'core:catalog' %}" class="btn btn-secondary">← Назад в каталог</a>
+</div>
 
-        {% if product.description %}
-        <div class="description">
-            <h3>Описание:</h3>
-            <p>{{ product.description }}</p>
-        </div>
-        {% endif %}
+<article style="margin-top: 20px;">
+    <h1>{{ product.name }}</h1>
 
-        <div class="suppliers">
-            <h3>Поставщики:</h3>
-            <p>{{ product.display_suppliers }}</p>
-        </div>
+    <table style="margin: 20px 0; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 8px; font-weight: bold;">Артикул:</td>
+            <td style="padding: 8px;">{{ product.article }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; font-weight: bold;">Тип:</td>
+            <td style="padding: 8px;">{{ product.product_type.name }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; font-weight: bold;">Производитель:</td>
+            <td style="padding: 8px;">{{ product.manufacturer.name }} ({{ product.manufacturer.country }})</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; font-weight: bold; color: #e74c3c; font-size: 20px;">Цена:</td>
+            <td style="padding: 8px; color: #e74c3c; font-size: 20px;">{{ product.price }} руб.</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; font-weight: bold; color: #27ae60;">В наличии:</td>
+            <td style="padding: 8px; color: #27ae60;">{{ product.stock }} шт.</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; font-weight: bold;">Поставщики:</td>
+            <td style="padding: 8px;">{{ product.display_suppliers }}</td>
+        </tr>
+    </table>
 
-        {% if product.stock > 0 %}
-        <form method="post" action="{% url 'core:add_to_cart' product_id=product.id %}">
-            {% csrf_token %}
-            <input type="hidden" name="next" value="{% url 'core:product_detail' pk=product.id %}">
-            <label>Количество: <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}"></label>
-            <button type="submit">Добавить в корзину</button>
-        </form>
-        {% else %}
-        <p class="out-of-stock">Нет в наличии</p>
-        {% endif %}
-    </article>
+    {% if product.description %}
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3>Описание:</h3>
+        <p>{{ product.description }}</p>
+    </div>
+    {% endif %}
 
-    {% if related_products %}
-    <section>
-        <h2>Похожие товары</h2>
+    {% if product.stock > 0 %}
+    <form method="post" action="{% url 'core:add_to_cart' product_id=product.id %}" style="margin-top: 20px;">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{% url 'core:product_detail' pk=product.id %}">
+        <label style="display: block; margin-bottom: 10px;">
+            Количество:
+            <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}"
+                style="width: 80px; padding: 10px; font-size: 16px;">
+        </label>
+        <button type="submit" class="btn btn-success" style="font-size: 18px; padding: 12px 30px;">🛒 Добавить в
+            корзину</button>
+    </form>
+    {% else %}
+    <p style="color: #e74c3c; font-size: 18px; font-weight: bold;">Нет в наличии</p>
+    {% endif %}
+</article>
+
+{% if related_products %}
+<section style="margin-top: 40px;">
+    <h2>Похожие товары</h2>
+    <div
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
         {% for related in related_products %}
-        <div>
-            <h3>{{ related.name }}</h3>
-            <p>{{ related.price }} руб.</p>
-            <a href="{% url 'core:product_detail' pk=related.id %}">Смотреть</a>
+        <div style="border: 1px solid #ddd; padding: 15px; border-radius: 8px;">
+            <h3><a href="{% url 'core:product_detail' pk=related.id %}">{{ related.name }}</a></h3>
+            <p style="color: #e74c3c; font-weight: bold;">{{ related.price }} руб.</p>
+            <a href="{% url 'core:product_detail' pk=related.id %}" class="btn btn-primary">Смотреть</a>
         </div>
         {% endfor %}
-    </section>
-    {% endif %}
-</body>
-
-</html>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

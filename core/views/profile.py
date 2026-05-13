@@ -1,8 +1,6 @@
 from django.views.generic import TemplateView, ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from products.models import Sale, Customer
-# from core.models import Employee
-
 
 class ProfileView(LoginRequiredMixin, TemplateView):
     """Личный кабинет"""
@@ -37,3 +35,9 @@ class OrderHistoryView(LoginRequiredMixin, ListView):
                 customer=customer
             ).order_by('-sale_date')
         return Sale.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        for order in context['orders']:
+            order.discount = order.total_amount - order.discounted_total_amount
+        return context

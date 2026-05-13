@@ -1,14 +1,18 @@
-<!-- core/templates/core/logout.html -->
-<!DOCTYPE html>
-<html>
+{% extends 'base.html' %}
 
-<head>
-    <meta http-equiv="refresh" content="2;url={% url 'core:home' %}">
-    <title>Выход</title>
-</head>
+{% block title %}Выход — Автомагазин{% endblock %}
 
-<body>
-    <p>Вы вышли из системы. Перенаправление...</p>
-</body>
+{% block content %}
+<div style="text-align: center; padding: 40px;">
+    <h1>До свидания!</h1>
+    <p style="font-size: 18px; color: #666; margin-top: 20px;">Вы успешно вышли из системы</p>
+    <p style="color: #999; margin-top: 10px;">Перенаправление на главную страницу...</p>
+    <a href="{% url 'core:home' %}" class="btn btn-primary" style="margin-top: 20px;">Перейти на главную</a>
+</div>
 
-</html>
+<script>
+    setTimeout(function () {
+        window.location.href = "{% url 'core:home' %}";
+    }, 2000);
+</script>
+{% endblock %}

@@ -1,90 +1,98 @@
-<!-- core/templates/core/catalog.html -->
-<!DOCTYPE html>
-<html lang="ru">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Каталог товаров — Автомагазин</title>
-</head>
+{% block title %}Каталог товаров — Автомагазин{% endblock %}
 
-<body>
-    <h1>Каталог товаров</h1>
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'core:home' %}">Главная</a>
+    <span>→</span>
+    <span>Каталог</span>
+</div>
+{% endblock %}
 
-    <!-- Фильтры -->
-    <div class="filters">
-        <h2>Фильтры</h2>
-        <form method="get" action="{% url 'core:catalog' %}">
-            <!-- Поиск -->
-            <input type="text" name="q" placeholder="Поиск..." value="{{ current_filters.q }}">
+{% block content %}
+<h1>Каталог товаров</h1>
 
-            <!-- Категория -->
-            <select name="category">
-                <option value="">Все категории</option>
-                    {% for category in categories %}
-                    <option value="{{ category.id }}" {% if current_filters.category == category.id|stringformat:"s" %}selected{% endif %}>
-                        {{ category.name }}
-                    </option>
-                    {% endfor %}
-            </select>
 
-            <!-- Цена -->
-            <input type="number" name="price_min" placeholder="Цена от" value="{{ current_filters.price_min }}">
-            <input type="number" name="price_max" placeholder="Цена до" value="{{ current_filters.price_max }}">
-
-            <!-- Сортировка -->
-            <select name="sort">
-                <option value="name" {% if current_filters.sort == "name" %}selected{% endif %}>По названию</option>
-                <option value="price_asc" {% if current_filters.sort == "price_asc" %}selected{% endif %}>Сначала дешевле
-                </option>
-                <option value="price_desc" {% if current_filters.sort == "price_desc" %}selected{% endif %}>Сначала дороже
-                </option>
-            </select>
-
-            <button type="submit">Применить</button>
-            <a href="{% url 'core:catalog' %}">Сбросить</a>
-        </form>
-    </div>
-
-    <!-- Список товаров -->
-    <div class="product-grid">
-        {% for product in products %}
-        <div class="product-card">
-            <h3>{{ product.name }}</h3>
-            <p>Артикул: {{ product.article }}</p>
-            <p>Тип: {{ product.product_type.name }}</p>
-            <p>Производитель: {{ product.manufacturer.name }}</p>
-            <p>Цена: {{ product.price }} руб.</p>
-            <p>В наличии: {{ product.stock }} шт.</p>
-            <a href="{% url 'core:product_detail' pk=product.id %}">Подробнее</a>
-
-            <form method="post" action="{% url 'core:add_to_cart' product_id=product.id %}">
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}">
-                <button type="submit">В корзину</button>
-            </form>
+<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <h3>Фильтры</h3>
+    <form method="get" action="{% url 'core:catalog' %}"
+        style="display: flex; gap: 15px; flex-wrap: wrap; align-items: end;">
+        <div>
+            <input type="text" name="q" placeholder="Поиск..." value="{{ current_filters.q }}"
+                style="padding: 10px; width: 200px; border: 1px solid #ddd; border-radius: 4px;">
         </div>
-        {% empty %}
-        <p>Товары не найдены</p>
-        {% endfor %}
-    </div>
+        <div>
+            <select name="category" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="">Все категории</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}" {% if current_filters.category == category.id %}selected{% endif %}>
+                    {{ category.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <input type="number" name="price_min" placeholder="Цена от" value="{{ current_filters.price_min }}"
+                style="padding: 10px; width: 100px; border: 1px solid #ddd; border-radius: 4px;">
+            <input type="number" name="price_max" placeholder="Цена до" value="{{ current_filters.price_max }}"
+                style="padding: 10px; width: 100px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div>
+            <select name="sort" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="name" {% if current_filters.sort == 'name' %}selected{% endif %}>По названию</option>
+                <option value="price_asc" {% if current_filters.sort == 'price_asc' %}selected{% endif %}>Сначала дешевле
+                </option>
+                <option value="price_desc" {% if current_filters.sort == 'price_desc' %}selected{% endif %}>Сначала дороже
+                </option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">🔍 Применить</button>
+        <a href="{% url 'core:catalog' %}" class="btn btn-secondary">Сбросить</a>
+    </form>
+</div>
 
-    <!-- Пагинация -->
-    {% if is_paginated %}
-    <div class="pagination">
-        {% if page_obj.has_previous %}
-        <a
-            href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">←</a>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
+    {% for product in products %}
+    <div style="border: 1px solid #ddd; padding: 15px; border-radius: 8px;">
+        <h3><a href="{% url 'core:product_detail' pk=product.id %}">{{ product.name }}</a></h3>
+        <p>Артикул: {{ product.article }}</p>
+        <p>Тип: {{ product.product_type.name }}</p>
+        <p>Производитель: {{ product.manufacturer.name }}</p>
+        <p style="color: #e74c3c; font-size: 20px; font-weight: bold;">{{ product.price }} руб.</p>
+        <p style="color: #27ae60;">В наличии: {{ product.stock }} шт.</p>
+        <a href="{% url 'core:product_detail' pk=product.id %}" class="btn btn-primary">Подробнее</a>
+
+        {% if product.stock > 0 %}
+        <form method="post" action="{% url 'core:add_to_cart' product_id=product.id %}" style="margin-top: 10px;">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}"
+                style="width: 60px; padding: 8px;">
+            <button type="submit" class="btn btn-success">В корзину</button>
+        </form>
+        {% else %}
+        <p style="color: #e74c3c;">Нет в наличии</p>
         {% endif %}
-
-        <span>Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
-
-        {% if page_obj.has_next %}
-        <a
-            href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">→</a>
-        {% endif %}
     </div>
+    {% empty %}
+    <p>Товары не найдены</p>
+    {% endfor %}
+</div>
+
+
+{% if is_paginated %}
+<div style="text-align: center; margin-top: 30px;">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+        class="btn btn-secondary">← Назад</a>
     {% endif %}
-</body>
-
-</html>
+    <span style="margin: 0 15px;">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+        class="btn btn-secondary">Вперёд →</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

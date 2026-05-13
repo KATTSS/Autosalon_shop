@@ -1,19 +1,43 @@
-<!DOCTYPE html>
-<html>
+{% extends 'base.html' %}
 
-<head>
-    <title>FAQ</title>
-</head>
+{% block title %}Вопросы и ответы — Автомагазин{% endblock %}
 
-<body>
-    <h1>Часто задаваемые вопросы</h1>
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'core:home' %}">Главная</a>
+    <span>→</span>
+    <span>FAQ</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>Часто задаваемые вопросы</h1>
+
+{% if faq_items %}
+<div style="margin-top: 20px;">
     {% for item in faq_items %}
-    <div>
-        <h3>Вопрос: {{ item.question }}</h3>
-        <p>Ответ: {{ item.answer }}</p>
-        <p>Добавлено: {{ item.date_added|date:"d/m/Y" }}</p>
-    </div>
+    <details style="border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; overflow: hidden;">
+        <summary
+            style="background: #f8f9fa; padding: 20px; cursor: pointer; font-weight: bold; font-size: 18px; list-style: none; display: flex; justify-content: space-between; align-items: center;">
+            <span>{{ item.question }}</span>
+            <span style="color: #3498db; font-size: 14px;">▼</span>
+        </summary>
+        <div style="padding: 20px; background: white;">
+            <p style="font-size: 16px; line-height: 1.6;">{{ item.answer }}</p>
+            <p style="color: #999; font-size: 14px; margin-top: 15px;">
+                Добавлено: {{ item.date_added|date:"d/m/Y" }}
+            </p>
+        </div>
+    </details>
     {% endfor %}
-</body>
+</div>
+{% else %}
+<div style="text-align: center; padding: 40px;">
+    <p style="font-size: 18px; color: #666;">Вопросов пока нет</p>
+</div>
+{% endif %}
 
-</html>
+<div style="margin-top: 30px;">
+    <a href="{% url 'core:contacts' %}" class="btn btn-primary">Не нашли ответ? Свяжитесь с нами</a>
+</div>
+{% endblock %}
