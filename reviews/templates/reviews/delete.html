@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Удалить отзыв — Автомагазин{% endblock %}
+
+{% block content %}
+<h1>Удалить отзыв</h1>
+
+<div style="background: #ffe6e6; padding: 25px; border-radius: 8px; margin-top: 20px; max-width: 500px;">
+    <p style="font-size: 18px;">Вы уверены, что хотите удалить этот отзыв?</p>
+    <p style="color: #666; margin-top: 10px;">"{{ review.text|truncatechars:100 }}"</p>
+
+    <form method="post" style="margin-top: 20px; display: flex; gap: 15px;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Да, удалить</button>
+        <a href="{% url 'reviews:list' %}" class="btn btn-secondary">Отмена</a>
+    </form>
+</div>
+{% endblock %}

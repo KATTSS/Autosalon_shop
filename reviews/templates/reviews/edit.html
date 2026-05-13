@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Редактировать отзыв — Автомагазин{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'core:home' %}">Главная</a>
+    <span>→</span>
+    <a href="{% url 'reviews:list' %}">Отзывы</a>
+    <span>→</span>
+    <span>Редактирование</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>Редактировать отзыв</h1>
+
+<form method="post" style="max-width: 600px; margin-top: 20px;">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div style="display: flex; gap: 15px;">
+        <button type="submit" class="btn btn-success">Сохранить</button>
+        <a href="{% url 'reviews:list' %}" class="btn btn-secondary">Отмена</a>
+    </div>
+</form>
+{% endblock %}

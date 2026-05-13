@@ -39,6 +39,15 @@
             Товар: {{ review.product.name }}
         </p>
         {% endif %}
+
+        {% if user.is_authenticated and review.user == user %}
+        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee; display: flex; gap: 10px;">
+            <a href="{% url 'reviews:edit' pk=review.id %}" class="btn btn-primary"
+                style="padding: 5px 15px; font-size: 14px;">Редактировать</a>
+            <a href="{% url 'reviews:delete' pk=review.id %}" class="btn btn-danger"
+                style="padding: 5px 15px; font-size: 14px;">Удалить</a>
+        </div>
+        {% endif %}
     </div>
     {% endfor %}
 </div>
@@ -59,6 +68,10 @@
     <p style="font-size: 18px; color: #666;">Отзывов пока нет. Будьте первым!</p>
     {% if user.is_authenticated %}
     <a href="{% url 'reviews:add' %}" class="btn btn-success" style="margin-top: 20px;">Оставить отзыв</a>
+    {% else %}
+    <p style="margin-top: 15px;">
+        <a href="{% url 'core:login' %}">Войдите</a>, чтобы оставить отзыв.
+    </p>
     {% endif %}
 </div>
 {% endif %}
