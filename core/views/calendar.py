@@ -2,6 +2,7 @@ from django.views.generic import TemplateView
 from django.utils import timezone
 from django.shortcuts import redirect
 from django.contrib import messages
+from core.services.api_services import get_currency_rates, get_weather
 import pytz
 
 def set_timezone(request):
@@ -20,7 +21,7 @@ def set_timezone(request):
 
 
 class DateTimeDemoView(TemplateView):
-    """Демонстрационная страница с датами и календарём"""
+    """Демонстрационная страница дат"""
     template_name = 'core/datetime_demo.html'
     
     def get_context_data(self, **kwargs):
@@ -39,5 +40,14 @@ class DateTimeDemoView(TemplateView):
         
         context['latest_article'] = Article.objects.first()
         context['latest_review'] = Review.objects.first()
+        
+        currency_rates = get_currency_rates()
+        weather = get_weather()
+        
+        print("Currency rates:", currency_rates)
+        print("Weather:", weather)
+        
+        context['currency_rates'] = currency_rates
+        context['weather'] = weather
         
         return context
