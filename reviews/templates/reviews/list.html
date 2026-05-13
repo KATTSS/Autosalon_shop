@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Отзывы</title>
+</head>
+
+<body>
+    <h1>Отзывы</h1>
+    {% for review in reviews %}
+    <div>
+        <h3>{{ review.user.username }}</h3>
+        <p>Оценка: {{ review.rating }}/5</p>
+        <p>{{ review.text }}</p>
+        <p>{{ review.created_date|date:"d/m/Y" }}</p>
+    </div>
+    {% endfor %}
+
+    <a href="{% url 'reviews:add' %}">Добавить отзыв</a>
+</body>
+
+</html>

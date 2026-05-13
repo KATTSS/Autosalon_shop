@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>FAQ</title>
+</head>
+
+<body>
+    <h1>Часто задаваемые вопросы</h1>
+    {% for item in faq_items %}
+    <div>
+        <h3>Вопрос: {{ item.question }}</h3>
+        <p>Ответ: {{ item.answer }}</p>
+        <p>Добавлено: {{ item.date_added|date:"d/m/Y" }}</p>
+    </div>
+    {% endfor %}
+</body>
+
+</html>

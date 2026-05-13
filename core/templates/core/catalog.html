@@ -20,12 +20,11 @@
             <!-- Категория -->
             <select name="category">
                 <option value="">Все категории</option>
-                {% for category in categories %}
-                <option value="{{ category.id }}" {% if current_filters.category==category.id|stringformat:"s"
-                    %}selected{% endif %}>
-                    {{ category.name }}
-                </option>
-                {% endfor %}
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if current_filters.category == category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
             </select>
 
             <!-- Цена -->
@@ -34,10 +33,10 @@
 
             <!-- Сортировка -->
             <select name="sort">
-                <option value="name" {% if current_filters.sort=="name" %}selected{% endif %}>По названию</option>
-                <option value="price_asc" {% if current_filters.sort=="price_asc" %}selected{% endif %}>Сначала дешевле
+                <option value="name" {% if current_filters.sort == "name" %}selected{% endif %}>По названию</option>
+                <option value="price_asc" {% if current_filters.sort == "price_asc" %}selected{% endif %}>Сначала дешевле
                 </option>
-                <option value="price_desc" {% if current_filters.sort=="price_desc" %}selected{% endif %}>Сначала дороже
+                <option value="price_desc" {% if current_filters.sort == "price_desc" %}selected{% endif %}>Сначала дороже
                 </option>
             </select>
 

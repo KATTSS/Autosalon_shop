@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Новости</title>
+</head>
+
+<body>
+    <h1>Новости</h1>
+    {% for article in articles %}
+    <div>
+        <h2><a href="{% url 'news:detail' slug=article.slug %}">{{ article.title }}</a></h2>
+        <p>{{ article.short_text }}</p>
+        <img src="{{ article.image.url }}" alt="{{ article.title }}">
+        <p>{{ article.published_date|date:"d/m/Y" }}</p>
+    </div>
+    {% endfor %}
+</body>
+
+</html>

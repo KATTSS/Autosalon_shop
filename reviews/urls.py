@@ -11,5 +11,5 @@ urlpatterns = [
     path('add/', views.ReviewCreateView.as_view(), name='add'),
     
     # Мои отзывы (личный кабинет)
-    path('my/', views.MyReviewsView.as_view(), name='my'),
+    # path('my/', views.MyReviewsView.as_view(), name='my'),
 ]

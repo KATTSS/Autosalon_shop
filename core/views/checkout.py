@@ -2,8 +2,8 @@ from django.views.generic import TemplateView
 from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from products.models import Product, Sale, SaleItem
-from core.models import Customer, PickupPoint
+from products.models import Product, Sale, SaleItem, Customer
+from core.models import PickupPoint #, Employee
 from promo.models import PromoCode
 from decimal import Decimal
 from django.utils import timezone
@@ -53,21 +53,25 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
         return context
     
     def post(self, request, *args, **kwargs):
-        """Создание заказа"""
         cart = request.session.get('cart', {})
         
         if not cart:
             messages.error(request, 'Корзина пуста!')
             return redirect('core:cart')
         
+        # Проверяем, что у пользователя заполнен профиль
+        try:
+            customer = Customer.objects.get(user=request.user)
+        except Customer.DoesNotExist:
+            messages.error(
+                request, 
+                'Для оформления заказа необходим заполненный профиль. '
+                'Пожалуйста, обратитесь к администратору.'
+            )
+            return redirect('core:checkout')
+        
         try:
             with transaction.atomic():
-                # Получаем или создаём покупателя
-                customer, _ = Customer.objects.get_or_create(
-                    user=request.user,
-                    defaults={'phone': ''}
-                )
-                
                 # Проверяем промокод
                 promo_code = None
                 promo_code_id = request.POST.get('promo_code')
@@ -90,7 +94,6 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
                     product = Product.objects.get(id=int(product_id))
                     quantity = item_data.get('quantity', 1)
                     
-                    # Проверяем наличие (повторно, на всякий случай)
                     if quantity > product.calculate_stock():
                         raise ValueError(
                             f'Недостаточно товара "{product.name}" на складе!'
@@ -111,7 +114,7 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
                     f'Сумма: {sale.total_amount} руб.'
                 )
                 
-                return redirect('core:order_detail', pk=sale.id)
+                return redirect('core:home')  # Или на страницу заказа
                 
         except ValueError as e:
             messages.error(request, str(e))

@@ -1,7 +1,7 @@
 from django.views.generic import TemplateView, ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from products.models import Sale
-from core.models import Customer
+from products.models import Sale, Customer
+# from core.models import Employee
 
 
 class ProfileView(LoginRequiredMixin, TemplateView):

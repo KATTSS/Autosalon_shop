@@ -8,5 +8,5 @@ urlpatterns = [
     path('', views.PromoListView.as_view(), name='list'),
     
     # Проверка промокода (AJAX)
-    path('check/', views.check_promo, name='check'),
+    # path('check/', views.check_promo, name='check'),
 ]

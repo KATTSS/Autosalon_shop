@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+<head><title>{{ article.title }}</title></head>
+<body>
+    <h1>{{ article.title }}</h1>
+    <img src="{{ article.image.url }}" alt="{{ article.title }}">
+    <p>{{ article.full_text }}</p>
+    <p>Опубликовано: {{ article.published_date|date:"d/m/Y H:i" }}</p>
+    <a href="{% url 'news:list' %}">← Назад к новостям</a>
+</body>
+</html>

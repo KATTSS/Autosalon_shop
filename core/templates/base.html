@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Автомагазин{% endblock %}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Шапка */
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logo a {
+            color: white;
+            text-decoration: none;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .logo a:hover {
+            color: #3498db;
+        }
+
+        /* Навигация */
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        nav a:hover {
+            background: #34495e;
+        }
+
+        /* Блок авторизации */
+        .auth-block {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .auth-block a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .auth-block a:hover {
+            text-decoration: underline;
+        }
+
+        .cart-link {
+            background: #e74c3c;
+            padding: 5px 15px;
+            border-radius: 4px;
+            color: white !important;
+        }
+
+        .cart-link:hover {
+            background: #c0392b;
+            text-decoration: none !important;
+        }
+
+        /* Сообщения */
+        .messages {
+            margin: 20px 0;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .alert.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* Основной контент */
+        main {
+            background: white;
+            padding: 30px;
+            margin: 20px auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            min-height: 400px;
+        }
+
+        /* Подвал */
+        footer {
+            background: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            margin-top: 40px;
+        }
+
+        footer .container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        footer h3 {
+            margin-bottom: 10px;
+        }
+
+        /* Хлебные крошки */
+        .breadcrumbs {
+            margin-bottom: 20px;
+            padding: 10px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .breadcrumbs a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .breadcrumbs a:hover {
+            text-decoration: underline;
+        }
+
+        .breadcrumbs span {
+            margin: 0 5px;
+        }
+
+        /* Кнопки */
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #219a52;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- Шапка с навигацией -->
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="{% url 'core:home' %}">🚗 Автомагазин</a>
+            </div>
+
+            <nav>
+                <ul>
+                    <li><a href="{% url 'core:home' %}">Главная</a></li>
+                    <li><a href="{% url 'core:catalog' %}">Каталог</a></li>
+                    <li><a href="{% url 'core:about' %}">О компании</a></li>
+                    <li><a href="{% url 'news:list' %}">Новости</a></li>
+                    <li><a href="{% url 'faq:list' %}">FAQ</a></li>
+                    <li><a href="{% url 'vacancies:list' %}">Вакансии</a></li>
+                    <li><a href="{% url 'reviews:list' %}">Отзывы</a></li>
+                    <li><a href="{% url 'promo:list' %}">Промокоды</a></li>
+                    <li><a href="{% url 'core:contacts' %}">Контакты</a></li>
+                </ul>
+            </nav>
+
+            <div class="auth-block">
+                {% if user.is_authenticated %}
+                <a href="{% url 'core:profile' %}">👤 {{ user.username }}</a>
+                <a href="{% url 'core:logout' %}">Выйти</a>
+                {% else %}
+                <a href="{% url 'core:login' %}">Войти</a>
+                <a href="{% url 'core:register' %}">Регистрация</a>
+                {% endif %}
+                <a href="{% url 'core:cart' %}" class="cart-link">🛒 Корзина</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Сообщения -->
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Хлебные крошки -->
+        {% block breadcrumbs %}{% endblock %}
+
+        <!-- Основной контент -->
+        <main>
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+
+    <!-- Подвал -->
+    <footer>
+        <div class="container">
+            <div>
+                <h3>Автомагазин</h3>
+                <p>Запчасти для автомобилей с доставкой</p>
+                <p>© 2026 Все права защищены</p>
+            </div>
+            <div>
+                <h3>Разделы</h3>
+                <ul>
+                    <li><a href="{% url 'core:catalog' %}">Каталог товаров</a></li>
+                    <li><a href="{% url 'news:list' %}">Новости</a></li>
+                    <li><a href="{% url 'promo:list' %}">Промокоды</a></li>
+                    <li><a href="{% url 'vacancies:list' %}">Вакансии</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>Покупателям</h3>
+                <ul>
+                    <li><a href="{% url 'core:about' %}">О компании</a></li>
+                    <li><a href="{% url 'core:contacts' %}">Контакты</a></li>
+                    <li><a href="{% url 'faq:list' %}">FAQ</a></li>
+                    <li><a href="{% url 'reviews:list' %}">Отзывы</a></li>
+                    <li><a href="{% url 'core:privacy' %}">Политика конфиденциальности</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

@@ -8,5 +8,5 @@ urlpatterns = [
     path('', views.VacancyListView.as_view(), name='list'),
     
     # Детальная вакансия
-    path('<int:pk>/', views.VacancyDetailView.as_view(), name='detail'),
+    # path('<int:pk>/', views.VacancyDetailView.as_view(), name='detail'),
 ]
