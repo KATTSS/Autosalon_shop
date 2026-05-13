@@ -6,3 +6,4 @@ from .auth import LoginView, LogoutView, RegisterView
 from .profile import ProfileView, OrderHistoryView, ProfileUpdateView
 from .contacts import ContactsView
 from .calendar import DateTimeDemoView, set_timezone 
+from .statistics import StatisticsView

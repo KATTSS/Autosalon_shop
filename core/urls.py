@@ -46,4 +46,7 @@ urlpatterns = [
     # Календарь
     path('datetime/', views.DateTimeDemoView.as_view(), name='datetime_demo'),
     path('set-timezone/', views.set_timezone, name='set_timezone'),
+
+    # Статистика
+    path('statistics/', views.StatisticsView.as_view(), name='statistics'),
 ]

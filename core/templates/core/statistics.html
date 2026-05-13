@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}Статистика — Автомагазин{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'core:home' %}">Главная</a>
+    <span>→</span>
+    <span>Статистика</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>Статистика автомагазина</h1>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-top: 20px;">
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center;">
+        <h3 style="margin: 0;">Всего продаж</h3>
+        <p style="font-size: 28px; margin: 10px 0;">{{ total_sales_count }}</p>
+    </div>
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center;">
+        <h3 style="margin: 0;">Общая выручка</h3>
+        <p style="font-size: 28px; margin: 10px 0;">{{ total_sales }} руб.</p>
+    </div>
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center;">
+        <h3 style="margin: 0;">Скидки</h3>
+        <p style="font-size: 28px; margin: 10px 0;">{{ total_sales|add:total_discounted_sales|floatformat:0 }} руб.</p>
+    </div>
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center;">
+        <h3 style="margin: 0;">Товаров</h3>
+        <p style="font-size: 28px; margin: 10px 0;">{{ total_products }}</p>
+    </div>
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center;">
+        <h3 style="margin: 0;">Клиентов</h3>
+        <p style="font-size: 28px; margin: 10px 0;">{{ total_customers }}</p>
+    </div>
+</div>
+
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;">
+    <div style="background: #f8f9fa; padding: 25px; border-radius: 8px;">
+        <h2>Статистика по сумме продаж</h2>
+        <table style="width: 100%; margin-top: 15px;">
+            <tr>
+                <td style="padding: 10px; font-weight: bold;">Средняя сумма:</td>
+                <td style="padding: 10px;">{{ avg_sale|floatformat:2 }} руб.</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; font-weight: bold;">Медиана:</td>
+                <td style="padding: 10px;">{{ median_sale|floatformat:2 }} руб.</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; font-weight: bold;">Мода:</td>
+                <td style="padding: 10px;">{{ mode_sale|floatformat:2 }} руб.</td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="background: #f8f9fa; padding: 25px; border-radius: 8px;">
+        <h2>Статистика по возрасту клиентов</h2>
+        <table style="width: 100%; margin-top: 15px;">
+            <tr>
+                <td style="padding: 10px; font-weight: bold;">Средний возраст:</td>
+                <td style="padding: 10px;">{{ avg_age|floatformat:1 }} лет</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; font-weight: bold;">Медианный возраст:</td>
+                <td style="padding: 10px;">{{ median_age|floatformat:1 }} лет</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; font-weight: bold;">Минимальный возраст:</td>
+                <td style="padding: 10px;">{{ min_age }} лет</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; font-weight: bold;">Максимальный возраст:</td>
+                <td style="padding: 10px;">{{ max_age }} лет</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; font-weight: bold;">Всего клиентов с возрастом:</td>
+                <td style="padding: 10px;">{{ total_customers_with_age }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;">
+    <div style="background: #f8f9fa; padding: 25px; border-radius: 8px;">
+        <h2>Самые популярные типы товаров</h2>
+        {% if popular_types %}
+        <table style="width: 100%; margin-top: 15px; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f8f9fa;">
+                    <th style="padding: 10px; border: 1px solid #ddd;">Тип товара</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Продано (шт.)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pt in popular_types %}
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #ddd;">{{ pt.name }}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                        {{ pt.total_sold|default:0 }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color: #666; margin-top: 15px;">Нет данных о продажах</p>
+        {% endif %}
+    </div>
+
+    <div style="background: #f8f9fa; padding: 25px; border-radius: 8px;">
+        <h2>Самые прибыльные типы товаров</h2>
+        {% if profitable_types %}
+        <table style="width: 100%; margin-top: 15px; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f8f9fa;">
+                    <th style="padding: 10px; border: 1px solid #ddd;">Тип товара</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Выручка (руб.)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pt in profitable_types %}
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #ddd;">{{ pt.name }}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                        {{ pt.total_revenue|floatformat:2|default:"0.00" }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color: #666; margin-top: 15px;">Нет данных</p>
+        {% endif %}
+    </div>
+</div>
+
+<div style="background: #f8f9fa; padding: 25px; border-radius: 8px; margin-top: 30px;">
+    <h2>Топ-10 товаров по продажам</h2>
+    {% if top_products %}
+    <table style="width: 100%; margin-top: 15px; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #f8f9fa;">
+                <th style="padding: 10px; border: 1px solid #ddd;">№</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Товар</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Артикул</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Продано (шт.)</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Выручка (руб.)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in top_products %}
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">{{ forloop.counter }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">
+                    <a href="{% url 'core:product_detail' pk=product.id %}">{{ product.name }}</a>
+                </td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ product.article }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">{{ product.total_sold|default:0 }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">{{ product.revenue|floatformat:2|default:"0.00" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: #666; margin-top: 15px;">Нет данных о продажах</p>
+    {% endif %}
+</div>
+
+{% endblock %}
