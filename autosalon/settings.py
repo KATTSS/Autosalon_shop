@@ -136,7 +136,6 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 # Logging
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 LOGS_DIR = BASE_DIR / 'logs'
 if not LOGS_DIR.exists():
@@ -171,3 +170,8 @@ LOGGING = {
         },
     },
 }
+
+# Media
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
