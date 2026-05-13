@@ -9,6 +9,9 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class RegisterForm(UserCreationForm):
@@ -78,11 +81,13 @@ class LoginView(TemplateView):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
+            logger.info(f'User {user.username} logged in')
             messages.success(request, f'Добро пожаловать, {user.username}!')
             next_url = request.GET.get('next', 'core:home')
             return redirect(next_url)
         
         messages.error(request, 'Неверное имя пользователя или пароль')
+        logger.warning(f'Failed login attempt for {request.POST.get("username")}')
         return redirect('core:login')
 
 

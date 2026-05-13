@@ -3,7 +3,9 @@ from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from products.models import Product
 from decimal import Decimal
+import logging
 
+logger = logging.getLogger(__name__)
 
 class CartView(TemplateView):
     """Просмотр корзины"""
@@ -47,15 +49,14 @@ def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     quantity = int(request.POST.get('quantity', 1))
     
-    # Проверка наличия
     if quantity > product.stock:
         messages.error(
             request, 
             f'Недостаточно товара "{product.name}" на складе! Доступно: {product.stock} шт.'
         )
+        logger.warning(f'Attempt to add {quantity} of {product.name} (only {product.stock} available)')
         return redirect('core:product_detail', pk=product_id)
     
-    # Работа с сессией
     cart = request.session.get('cart', {})
     product_id_str = str(product_id)
     
@@ -69,9 +70,9 @@ def add_to_cart(request, product_id):
         cart[product_id_str] = {'quantity': quantity}
     
     request.session['cart'] = cart
-    messages.success(request, f'✅ {product.name} добавлен в корзину ({quantity} шт.)')
-    
-    # Возвращаемся туда, откуда пришли
+    messages.success(request, f'{product.name} добавлен в корзину ({quantity} шт.)')
+    logger.debug(f'{product.name} added to cart by {request.user}')
+
     next_url = request.POST.get('next', request.META.get('HTTP_REFERER', 'core:catalog'))
     return redirect(next_url)
 

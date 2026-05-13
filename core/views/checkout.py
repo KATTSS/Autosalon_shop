@@ -9,6 +9,9 @@ from decimal import Decimal
 from django.utils import timezone
 from django.db import transaction
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class CheckoutView(LoginRequiredMixin, TemplateView):
     """Оформление заказа"""
@@ -20,6 +23,7 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
         cart = self.request.session.get('cart', {})
         
         if not cart:
+            logger.warning(f'User {request.user} tried to checkout with empty cart')
             return context
         
         cart_items = []
@@ -38,6 +42,7 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
                     'item_total': item_total,
                 })
             except Product.DoesNotExist:
+                logger.error(f'Checkout error for {request.user}: {str(e)}')
                 continue
         
         context.update({
