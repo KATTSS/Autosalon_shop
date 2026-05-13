@@ -25,7 +25,7 @@
             padding: 0 20px;
         }
 
-    
+
         header {
             background: #2c3e50;
             color: white;
@@ -53,7 +53,7 @@
             color: #3498db;
         }
 
-    
+
         nav ul {
             list-style: none;
             display: flex;
@@ -73,7 +73,7 @@
             background: #34495e;
         }
 
-     
+
         .auth-block {
             display: flex;
             gap: 15px;
@@ -101,7 +101,7 @@
             text-decoration: none !important;
         }
 
-   
+
         .messages {
             margin: 20px 0;
         }
@@ -136,7 +136,7 @@
             border: 1px solid #bee5eb;
         }
 
-   
+
         main {
             background: white;
             padding: 30px;
@@ -146,7 +146,7 @@
             min-height: 400px;
         }
 
-     
+
         footer {
             background: #2c3e50;
             color: white;
@@ -174,7 +174,7 @@
             margin-bottom: 10px;
         }
 
-       
+
         .breadcrumbs {
             margin-bottom: 20px;
             padding: 10px 0;
@@ -264,6 +264,7 @@
                     <li><a href="{% url 'reviews:list' %}">Отзывы</a></li>
                     <li><a href="{% url 'promo:list' %}">Промокоды</a></li>
                     <li><a href="{% url 'core:contacts' %}">Контакты</a></li>
+                    <li><a href="{% url 'core:datetime_demo' %}">Даты</a></li>
                 </ul>
             </nav>
 
@@ -297,13 +298,12 @@
         </main>
     </div>
 
-    
+
     <footer>
         <div class="container">
             <div>
                 <h3>Автомагазин</h3>
                 <p>Запчасти для автомобилей с доставкой</p>
-                <p>© 2026 Все права защищены</p>
             </div>
             <div>
                 <h3>Разделы</h3>
@@ -312,6 +312,7 @@
                     <li><a href="{% url 'news:list' %}">Новости</a></li>
                     <li><a href="{% url 'promo:list' %}">Промокоды</a></li>
                     <li><a href="{% url 'vacancies:list' %}">Вакансии</a></li>
+                    <li><a href="{% url 'core:datetime_demo' %}">Календарь</a></li>
                 </ul>
             </div>
             <div>

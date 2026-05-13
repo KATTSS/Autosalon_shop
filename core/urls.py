@@ -41,4 +41,8 @@ urlpatterns = [
     path('login/', views.LoginView.as_view(), name='login'),
     path('logout/', views.LogoutView.as_view(), name='logout'),
     path('register/', views.RegisterView.as_view(), name='register'),
+
+    # Календарь
+    path('datetime/', views.DateTimeDemoView.as_view(), name='datetime_demo'),
+    path('set-timezone/', views.set_timezone, name='set_timezone'),
 ]

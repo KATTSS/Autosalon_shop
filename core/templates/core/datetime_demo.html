@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load datetime_tags %}
+
+{% block title %}Даты и время — Автомагазин{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'core:home' %}">Главная</a>
+    <span>→</span>
+    <span>Даты и время</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>Даты, время и календарь</h1>
+
+
+<section style="background: #f8f9fa; padding: 25px; border-radius: 8px; margin-top: 20px;">
+    <h2>Текущая дата и время</h2>
+    <table style="width: 100%; margin-top: 15px; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 12px; font-weight: bold; width: 250px;">Тайм-зона пользователя:</td>
+            <td style="padding: 12px; font-size: 18px; color: #27ae60;">{{ user_tz }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px; font-weight: bold;">Время пользователя:</td>
+            <td style="padding: 12px; font-size: 18px; color: #2c3e50;">{% current_time_user %}</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px; font-weight: bold;">Время UTC:</td>
+            <td style="padding: 12px; font-size: 18px; color: #e74c3c;">{% current_time_utc %}</td>
+        </tr>
+    </table>
+</section>
+
+
+<section style="background: #fff; padding: 25px; border: 1px solid #ddd; border-radius: 8px; margin-top: 25px;">
+    <h2>Текстовый календарь</h2>
+    <pre style="background: #2c3e50; color: #ecf0f1; padding: 20px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 14px; overflow-x: auto; margin-top: 15px;">{% text_calendar %}</pre>
+</section>
+
+
+<section style="margin-top: 25px;">
+    <h2>Даты добавления/изменения данных</h2>
+    
+    {% if latest_article %}
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 15px;">
+        <h3>Последняя статья: "{{ latest_article.title }}"</h3>
+        <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 8px; font-weight: bold; width: 200px;">Опубликовано (UTC):</td>
+                <td style="padding: 8px;">{{ latest_article.published_date|format_date_utc }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; font-weight: bold;">Опубликовано ({{ user_tz }}):</td>
+                <td style="padding: 8px;">{{ latest_article.published_date|format_date:user_tz }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; font-weight: bold;">Обновлено (UTC):</td>
+                <td style="padding: 8px;">{{ latest_article.updated_date|format_date_utc }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; font-weight: bold;">Обновлено ({{ user_tz }}):</td>
+                <td style="padding: 8px;">{{ latest_article.updated_date|format_date:user_tz }}</td>
+            </tr>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if latest_review %}
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 15px;">
+        <h3>Последний отзыв от {{ latest_review.user.username }}</h3>
+        <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 8px; font-weight: bold; width: 200px;">Создан (UTC):</td>
+                <td style="padding: 8px;">{{ latest_review.created_date|format_date_utc }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; font-weight: bold;">Создан ({{ user_tz }}):</td>
+                <td style="padding: 8px;">{{ latest_review.created_date|format_date:user_tz }}</td>
+            </tr>
+        </table>
+    </div>
+    {% endif %}
+</section>
+
+
+<section style="background: #f8f9fa; padding: 25px; border-radius: 8px; margin-top: 25px;">
+    <h2>Сменить тайм-зону</h2>
+    <form method="post" action="{% url 'core:set_timezone' %}" style="margin-top: 15px;">
+        {% csrf_token %}
+        <select name="timezone" style="padding: 10px; font-size: 16px; border: 1px solid #ddd; border-radius: 4px;">
+            <option value="Europe/Minsk" {% if user_tz == 'Europe/Minsk' %}selected{% endif %}>Минск (UTC+3)</option>
+            <option value="Europe/Moscow" {% if user_tz == 'Europe/Moscow' %}selected{% endif %}>Москва (UTC+3)</option>
+            <option value="Europe/Warsaw" {% if user_tz == 'Europe/Warsaw' %}selected{% endif %}>Варшава (UTC+2)</option>
+            <option value="Europe/London" {% if user_tz == 'Europe/London' %}selected{% endif %}>Лондон (UTC+1)</option>
+            <option value="UTC" {% if user_tz == 'UTC' %}selected{% endif %}>UTC</option>
+            <option value="America/New_York" {% if user_tz == 'America/New_York' %}selected{% endif %}>Нью-Йорк (UTC-4)</option>
+            <option value="Asia/Tokyo" {% if user_tz == 'Asia/Tokyo' %}selected{% endif %}>Токио (UTC+9)</option>
+        </select>
+        <button type="submit" class="btn btn-primary" style="padding: 10px 20px; margin-left: 10px;">Применить</button>
+    </form>
+</section>
+
+<div style="margin-top: 20px;">
+    <a href="{% url 'core:home' %}" class="btn btn-secondary">На главную</a>
+</div>
+{% endblock %}

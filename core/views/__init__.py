@@ -5,3 +5,4 @@ from .checkout import CheckoutView
 from .auth import LoginView, LogoutView, RegisterView
 from .profile import ProfileView, OrderHistoryView
 from .contacts import ContactsView
+from .calendar import DateTimeDemoView, set_timezone 
