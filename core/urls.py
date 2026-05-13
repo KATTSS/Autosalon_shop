@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, re_path
 from . import views
 
 app_name = 'core'
@@ -18,13 +18,17 @@ urlpatterns = [
     
     # Каталог товаров
     path('catalog/', views.ProductListView.as_view(), name='catalog'),
-    path('catalog/<int:pk>/', views.ProductDetailView.as_view(), name='product_detail'),
-    
+    re_path(r'^catalog/(?P<pk>\d+)/$', views.ProductDetailView.as_view(), name='product_detail'),
+    # path('catalog/<int:pk>/', views.ProductDetailView.as_view(), name='product_detail'),
+
     # Корзина
     path('cart/', views.CartView.as_view(), name='cart'),
-    path('cart/add/<int:product_id>/', views.add_to_cart, name='add_to_cart'),
-    path('cart/remove/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
-    path('cart/update/<int:product_id>/', views.update_cart, name='update_cart'),
+    re_path(r'^cart/add/(?P<product_id>\d+)/$', views.add_to_cart, name='add_to_cart'),
+    re_path(r'^cart/remove/(?P<item_id>\d+)/$', views.remove_from_cart, name='remove_from_cart'),
+    re_path(r'^cart/update/(?P<product_id>\d+)/$', views.update_cart, name='update_cart'),
+    # path('cart/add/<int:product_id>/', views.add_to_cart, name='add_to_cart'),
+    # path('cart/remove/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
+    # path('cart/update/<int:product_id>/', views.update_cart, name='update_cart'),
     
     # Оформление заказа
     path('checkout/', views.CheckoutView.as_view(), name='checkout'),
