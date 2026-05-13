@@ -23,7 +23,7 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
         cart = self.request.session.get('cart', {})
         
         if not cart:
-            logger.warning(f'User {request.user} tried to checkout with empty cart')
+            logger.warning(f'User {self.request.user} tried to checkout with empty cart')
             return context
         
         cart_items = []
