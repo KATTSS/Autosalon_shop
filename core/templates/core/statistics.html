@@ -36,6 +36,11 @@
     </div>
 </div>
 
+<!-- 🔥 ГРАФИК (вставлен здесь — после карточек) -->
+<div style="background: white; padding: 25px; border-radius: 8px; border: 1px solid #ddd; margin-top: 30px;">
+    <h2>Популярность типов товаров</h2>
+    <canvas id="popularityChart" height="300"></canvas>
+</div>
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;">
     <div style="background: #f8f9fa; padding: 25px; border-radius: 8px;">
@@ -158,8 +163,10 @@
                     <a href="{% url 'core:product_detail' pk=product.id %}">{{ product.name }}</a>
                 </td>
                 <td style="padding: 10px; border: 1px solid #ddd;">{{ product.article }}</td>
-                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">{{ product.total_sold|default:0 }}</td>
-                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">{{ product.revenue|floatformat:2|default:"0.00" }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">{{ product.total_sold|default:0
+                    }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">{{
+                    product.revenue|floatformat:2|default:"0.00" }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -169,4 +176,39 @@
     {% endif %}
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var canvas = document.getElementById('popularityChart');
+        if (!canvas) return;
+
+        var ctx = canvas.getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ type_labels| safe }},
+        datasets: [{
+            label: 'Продано (шт.)',
+            data: {{ type_data| safe }},
+        backgroundColor: ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6']
+            }]
+        },
+        options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { stepSize: 1 }
+            }
+        }
+    }
+    });
+});
+</script>
 {% endblock %}

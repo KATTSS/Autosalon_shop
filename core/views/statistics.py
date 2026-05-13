@@ -8,6 +8,7 @@ from dateutil.relativedelta import relativedelta
 from statistics import median, mode
 from decimal import Decimal
 from collections import Counter
+import json 
 
 
 class StatisticsView(UserPassesTestMixin, TemplateView):
@@ -98,5 +99,14 @@ class StatisticsView(UserPassesTestMixin, TemplateView):
         context['total_products'] = Product.objects.count()
         context['total_customers'] = Customer.objects.count()
         context['total_reviews'] = Sale.objects.count()
+
+        type_labels = []
+        type_data = []
+        for pt in popular_types:
+            type_labels.append(pt.name)
+            type_data.append(int(pt.total_sold or 0))
+        
+        context['type_labels'] = json.dumps(type_labels)
+        context['type_data'] = json.dumps(type_data)
         
         return context
