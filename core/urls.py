@@ -36,6 +36,7 @@ urlpatterns = [
     # Личный кабинет
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('profile/orders/', views.OrderHistoryView.as_view(), name='order_history'),
+    path('profile/edit/', views.ProfileUpdateView.as_view(), name='profile_edit'),
     
     # Авторизация
     path('login/', views.LoginView.as_view(), name='login'),
