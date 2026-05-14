@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: autosalon
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn autosalon.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: RENDER
+        value: true
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: false
+      - key: DB_NAME
+        fromDatabase:
+          name: autosalon-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: autosalon-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: autosalon-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: autosalon-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: autosalon-db
+          property: port
+
+databases:
+  - name: autosalon-db
+    plan: free

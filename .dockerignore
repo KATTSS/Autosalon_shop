@@ -1,0 +1,15 @@
+__pycache__
+*.pyc
+*.pyo
+*.db
+.sqlite3
+.env
+venv
+.venv
+.django_venv
+htmlcov
+logs
+media
+staticfiles
+.git
+.gitignore
