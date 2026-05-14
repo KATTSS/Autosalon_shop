@@ -1,12 +1,13 @@
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 from .models import Review
 
 
 class ReviewListView(ListView):
-    """Список отзывов"""
     model = Review
     template_name = 'reviews/list.html'
     context_object_name = 'reviews'
@@ -16,22 +17,30 @@ class ReviewListView(ListView):
         return Review.objects.filter(is_moderated=True).order_by('-created_date')
 
 
-class ReviewCreateView(LoginRequiredMixin, CreateView):
-    """Создание отзыва"""
-    model = Review
-    template_name = 'reviews/add.html'
-    fields = ['text', 'rating', 'product']
-    success_url = reverse_lazy('reviews:list')
-    login_url = 'core:login'
+@login_required(login_url='core:login')
+def review_create(request):
+    if request.method == 'POST':
+        text = request.POST.get('text', '')
+        rating = request.POST.get('rating', '')
+        product_id = request.POST.get('product', '') or None
+        
+        if text and rating:
+            Review.objects.create(
+                user=request.user,
+                text=text,
+                rating=rating,
+                product_id=product_id
+            )
+            messages.success(request, 'Отзыв отправлен на модерацию!')
+            return redirect('reviews:list')
     
-    def form_valid(self, form):
-        form.instance.user = self.request.user
-        messages.success(self.request, 'Отзыв отправлен на модерацию!')
-        return super().form_valid(form)
+    from products.models import Product
+    products = Product.objects.all()
+    ratings = range(1, 6)
+    return render(request, 'reviews/add.html', {'products': products, 'ratings': ratings})
 
 
 class ReviewUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    """Редактирование отзыва (только своего)"""
     model = Review
     template_name = 'reviews/edit.html'
     fields = ['text', 'rating', 'product']
@@ -39,7 +48,6 @@ class ReviewUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     login_url = 'core:login'
     
     def test_func(self):
-        """Проверка, что пользователь — автор отзыва"""
         review = self.get_object()
         return review.user == self.request.user
     
@@ -49,7 +57,6 @@ class ReviewUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
 
 class ReviewDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
-    """Удаление отзыва (только своего)"""
     model = Review
     template_name = 'reviews/delete.html'
     success_url = reverse_lazy('reviews:list')

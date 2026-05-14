@@ -19,14 +19,11 @@ class UserValidatorMixin:
     
     @staticmethod
     def validate_birth_date(value):
-        """Валидация даты рождения (18+)"""
         if value:
             today = timezone.now().date()
-            age = relativedelta(today, value).years
-            if age < 18:
-                raise ValidationError(
-                    'Пользователь должен быть старше 18 лет'
-                )
+            adult_date = value.replace(year=value.year + 18)
+            if adult_date > today:
+                raise ValidationError('Пользователь должен быть старше 18 лет')
     
     def clean(self):
         """Общая валидация для моделей, наследующих этот миксин"""
