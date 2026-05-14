@@ -109,11 +109,9 @@ class RegisterView(CreateView):
     
     def form_valid(self, form):
         from products.models import Customer
-        
-        # Создаём пользователя
+
         user = form.save()
         
-        # Создаём запись Customer с обязательными данными
         Customer.objects.create(
             user=user,
             phone=form.cleaned_data['phone'],
