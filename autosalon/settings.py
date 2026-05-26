@@ -24,13 +24,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = 'django-insecure-278nv-vl9e0080j@tlf%q%9n_82au7ojnkldo5rlpb&!&4dp86'
 SECRET_KEY = os.environ.get('SECRET_KEY')
 if not SECRET_KEY:
     raise ValueError("SECRET_KEY environment variable is required")
 
-# API keys
-# OPENWEATHER_API_KEY = 'YOUR_API_KEY_PLACEHOLDER'
+# API keys\
 OPENWEATHER_API_KEY = os.environ.get('OPENWEATHER_API_KEY', '')
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -38,12 +36,11 @@ OPENWEATHER_API_KEY = os.environ.get('OPENWEATHER_API_KEY', '')
 # DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 DEBUG = False
 
-# ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-# if os.environ.get('ALLOWED_HOSTS'):
-#     ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
+ if os.environ.get('ALLOWED_HOSTS'):
+     ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 
-ALLOWED_HOSTS = ['ekatss.pythonanywhere.com']
 
 # Application definition
 
