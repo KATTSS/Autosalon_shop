@@ -29,6 +29,7 @@
             <th style="padding: 12px; border: 1px solid #ddd;">Сумма</th>
             <th style="padding: 12px; border: 1px solid #ddd;">Скидка</th>
             <th style="padding: 12px; border: 1px solid #ddd;">Промокод</th>
+            <th>Статус</th>
         </tr>
     </thead>
     <tbody>
@@ -55,6 +56,19 @@
             </td>
             <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
                 {{ order.promo_code.code|default:"—" }}
+            </td>
+            <td>
+                {{ order.get_status_display }}
+                {% if order.status == 'awaiting_pickup' %}
+                <form method="post" action="{% url 'core:cancel_order' order.pk %}">
+                    {% csrf_token %}<button type="submit">Отменить заказ</button>
+                </form>
+                {% if user.is_staff %}
+                <form method="post" action="{% url 'core:complete_order' order.pk %}">
+                    {% csrf_token %}<button type="submit">Подтвердить выдачу</button>
+                </form>
+                {% endif %}
+                {% endif %}
             </td>
         </tr>
         {% endfor %}

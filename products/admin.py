@@ -97,11 +97,28 @@ class SaleAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'sale_date_user', 'sale_date_utc', 
         'pickup_point', 'total_amount', 'discounted_total_amount',
-        'promo_code', 'customer'
+        'promo_code', 'customer', 'status'
     )
-    list_filter = ('sale_date', 'pickup_point', 'promo_code', 'customer')
+    list_filter = ('sale_date', 'pickup_point', 'promo_code', 'customer', 'status')
+    actions = ['complete_orders', 'cancel_orders']
+
+    @admin.action(description='Подтвердить выдачу заказов')
+    def complete_orders(self, request, queryset):
+        self._transition_orders(request, queryset, Sale.Status.COMPLETED)
+
+    @admin.action(description='Отменить заказы')
+    def cancel_orders(self, request, queryset):
+        self._transition_orders(request, queryset, Sale.Status.CANCELLED)
+
+    def _transition_orders(self, request, queryset, target):
+        for sale in queryset:
+            try:
+                sale.transition_to(target)
+            except ValueError as error:
+                self.message_user(request, f'Заказ №{sale.pk}: {error}', level='error')
+
     inlines = [SaleItemInline]
-    readonly_fields = ('total_amount', 'discounted_total_amount', 'sale_date')
+    readonly_fields = ('total_amount', 'discounted_total_amount', 'sale_date', 'status')
     
     def sale_date_user(self, obj):
         """Дата продажи в часовом поясе пользователя (UTC+3)"""

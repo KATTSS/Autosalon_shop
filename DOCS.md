@@ -1,8 +1,7 @@
 # Software Requirements Specification (SRS)
 
 **Project:** Autosalon Shop
-**Version:** 1.0
-**Date:** 2026-10-03
+**Version:** 1.1
 ---
 
 # 1. Introduction
@@ -48,29 +47,45 @@ The system integrates with external services for:
 
 ## 1.3 Definitions and Abbreviations
 
-| Term         | Definition                                                        |
+| Term | Definition |
 | ------------ | ----------------------------------------------------------------- |
-| Customer     | Registered user who places orders                                 |
-| Employee     | Company staff member                                              |
-| Sale         | An order represented by the `Sale` entity                         |
-| SaleItem     | Individual product line within a sale                             |
-| Product      | Automotive spare part available for purchase                      |
-| ProductType  | Category/type of a product                                        |
-| Manufacturer | Company that manufactures a product                               |
-| Supplier     | Company supplying products                                        |
-| Supply       | Record describing supplied products                               |
-| PickupPoint  | Physical location where the customer collects an order            |
-| PromoCode    | Discount code applied to an order                                 |
-| Review       | Customer feedback associated with a user and optionally a product |
-| NBRB         | National Bank of the Republic of Belarus                          |
-| SRS          | Software Requirements Specification                               |
-| UC           | Use Case                                                          |
-| API          | Application Programming Interface                                 |
-| ORM          | Object-Relational Mapping                                         |
-| UI           | User Interface                                                    |
-| CSRF         | Cross-Site Request Forgery                                        |
+| Customer | Registered user who places orders |
+| Employee | Company staff member |
+| Sale | An order represented by the `Sale` entity |
+| SaleItem | Individual product line within a sale |
+| Product | Automotive spare part available for purchase |
+| ProductType | Category/type of a product |
+| Manufacturer | Company that manufactures a product |
+| Supplier | Company supplying products |
+| Supply | Record describing supplied products |
+| PickupPoint | Physical location where the customer collects an order |
+| PromoCode | Discount code applied to an order |
+| Review | Customer feedback associated with a user and optionally a product |
+| NBRB | National Bank of the Republic of Belarus |
+| SRS | Software Requirements Specification |
+| UC | Use Case |
+| API | Application Programming Interface |
+| ORM | Object-Relational Mapping |
+| UI | User Interface |
+| CSRF | Cross-Site Request Forgery |
 
 
+
+## 1.4 Verification approach
+
+Verification methods are attached to the requirements in sections 2–6:
+**UT** — isolated unit test with mocks and no database access;
+**IT** — integration test with Django Client/ORM or an HTTP transport stub;
+**ST** — scenario with successive operations;
+**CR** — source/configuration review;
+**MT** — manual runtime check;
+**LN** — load measurement.
+
+“Verified” means checked in the local SQLite environment. “Partial” links to
+an open defect in [ISSUES.md](ISSUES.md). “Not measured” is not a pass.
+The scoped test results and assignment checklist are in [TESTING.md](TESTING.md).
+Search wording was rewritten to specify the actual substring behavior; vague
+load criteria now specify requests, concurrency and an observable result.
 
 # 2. Business Requirements
 
@@ -94,17 +109,17 @@ centralized online sales platform.
 
 ---
 
-## 3.2 Business Goals
+## 2.2 Business Goals
 
-| ID    | Goal                                                  | Success Metric                                                            |
-| ----- | ----------------------------------------------------- | ------------------------------------------------------------------------- |
-| BG-01 | Provide a 24/7 online channel for selling auto parts  | Orders can be placed at any time of day                                   |
-| BG-02 | Reduce manual workload of sales managers              | Order placement is fully automated                                        |
-| BG-03 | Support promotional discounts                         | Valid promo codes can be applied at checkout                              |
-| BG-04 | Improve customer interaction through reviews and news | Users can read and submit reviews and access published news               |
-| BG-05 | Provide owners with sales analytics                   | Statistics and charts are available to authorized administrators          |
-| BG-06 | Support currency and contextual information           | Currency rates and Minsk weather are displayed                            |
-| BG-07 | Support legal and data-validation requirements        | Age, phone, authentication, and privacy-related validation is implemented |
+| ID | Goal | Success Metric | Method | Verification | Result |
+| ----- | ----------------------------------------------------- | ------------------------------------------------------------------------- | --- | --- | --- |
+| BG-01 | Provide a 24/7 online channel for selling auto parts | Checkout has no time-of-day restriction while the service is available | CR + ST | Review absence of checkout business-hour gate; lifecycle scenario creates order automatically. | Verified in application; infrastructure uptime not measured |
+| BG-02 | Reduce manual workload of sales managers | Order placement is fully automated | ST | test_cart_checkout_pickup_or_cancel_lifecycle: cart → checkout → stored Sale/items without manager action. | Verified |
+| BG-03 | Support promotional discounts | Valid promo codes can be applied at checkout | UT + ST | Mock promo calculation; discounted checkout scenario checks persisted totals. | Verified |
+| BG-04 | Improve customer interaction through reviews and news | Users can read and submit reviews and access published news | IT + ST | Public content filter; review creation/moderation/edit/delete scenario. | Verified |
+| BG-05 | Provide owners with sales analytics | Statistics and charts are available to authorized administrators | IT + MT | Known statistics aggregates and PNG generation; GET media chart URL; browser display. | Partial: ISSUE-004 |
+| BG-06 | Support currency and contextual information | Currency rates and Minsk weather are displayed | IT | test_datetime_page_parses_both_external_services_at_http_boundary with NBRB/weather HTTP stubs. | Verified with stubs; live APIs not tested |
+| BG-07 | Validate registration and restrict protected operations | Reject under-18/invalid-phone registration; require authentication for checkout | IT | Invalid registration and anonymous checkout checks. | Verified |
 
 ---
 
@@ -135,23 +150,25 @@ centralized online sales platform.
 
 ## 3.1 Actors
 
-| Actor                 | Description                                                          |
+| Actor | Description |
 | --------------------- | -------------------------------------------------------------------- |
-| Guest                 | Unauthenticated visitor                                              |
-| Customer              | Authenticated user with a `Customer` profile                         |
-| Superuser / Admin     | Staff member with administrative privileges and access to statistics |
-| External Weather API  | OpenWeatherMap service                                               |
-| External Currency API | NBRB service                                                         |
+| Guest | Unauthenticated visitor |
+| Customer | Authenticated user with a `Customer` profile |
+| Superuser / Admin | Administrator with access to statistics |
+| Staff | Authenticated is_staff user who confirms collection and may cancel orders |
+| External Weather API | OpenWeatherMap service |
+| External Currency API | NBRB service |
 
 ---
 
-## 4.2 Use Case Diagram
+## 3.2 Use Case Diagram
 
 ```mermaid
 graph LR
     Guest((Guest))
     Customer((Customer))
     Admin((Superuser))
+    Staff((Staff))
     WeatherAPI((OpenWeatherMap))
     CurrencyAPI((NBRB))
 
@@ -169,6 +186,8 @@ graph LR
     UC12[UC-12 View Statistics and Charts]
     UC13[UC-13 View Currency Rates and Weather]
     UC14[UC-14 Change Timezone]
+    UC15[Confirm Order Collection]
+    UC16[Cancel Order]
 
     Guest --> UC1
     Guest --> UC2
@@ -176,6 +195,9 @@ graph LR
     Guest --> UC4
     Guest --> UC10
     Guest --> UC11
+    Guest --> UC5
+    Guest --> UC13
+    Guest --> UC14
 
     Customer --> UC1
     Customer --> UC2
@@ -185,10 +207,13 @@ graph LR
     Customer --> UC9
     Customer --> UC14
 
-    UC6 -.->|include| UC7
+    UC7 -.->|extend: optional discount| UC6
 
     Admin --> UC12
     Admin --> UC13
+    Staff --> UC15
+    Staff --> UC16
+    Customer --> UC16
 
     UC13 --> WeatherAPI
     UC13 --> CurrencyAPI
@@ -198,21 +223,18 @@ graph LR
 
 ## 3.3 User Requirements
 
-| ID    | Requirement                                                                                                                                   | Actor            | Priority |
-| ----- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | -------- |
-| UR-01 | A guest shall be able to browse the product catalog with filtering by category, manufacturer, and price range.                                | Guest            | High     |
-| UR-02 | A guest shall be able to register an account by providing username, email, phone, and birth date. The customer must be at least 18 years old. | Guest            | High     |
-| UR-03 | A customer shall be able to add products to a cart and adjust quantities up to the available stock.                                           | Customer         | High     |
-| UR-04 | A customer shall be able to checkout an order by selecting a pickup point and optionally applying a promo code.                               | Customer         | High     |
-| UR-05 | A customer shall be able to view personal order history with total and discounted amounts.                                                    | Customer         | High     |
-| UR-06 | A customer shall be able to leave a review with a rating from 1 to 5.                                                                         | Customer         | Medium   |
-| UR-07 | A superuser shall be able to view sales statistics, including mean, median, mode, and product popularity charts.                              | Superuser        | Medium   |
-| UR-08 | Any user shall be able to view current currency rates for USD, EUR, RUB, and PLN and Minsk weather.                                           | Guest / Customer | Low      |
-| UR-09 | Any user shall be able to change the displayed timezone for date/time widgets.                                                                | Guest / Customer | Low      |
+| ID | Requirement | Actor | Priority | Method | Verification | Result |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | -------- | --- | --- | --- |
+| UR-01 | A guest shall be able to browse the product catalog with filtering by category, manufacturer, and price range. | Guest | High | IT | Catalog search/price/sort, related-entity filters and pagination tests. | Verified |
+| UR-02 | A guest shall be able to register an account by providing username, email, phone, and birth date. The customer must be at least 18 years old. | Guest | High | IT + UT | Register/login/logout scenario, invalid input tests and 18th-birthday boundary. | Verified |
+| UR-03 | A customer shall be able to add products to a cart and adjust quantities up to the available stock. | Customer | High | ST + IT | Lifecycle updates quantity; exact stock/overflow/removal and invalid quantity checks. | Verified |
+| UR-04 | A customer shall be able to checkout an order by selecting a pickup point and optionally applying a promo code. | Customer | High | ST + IT | Checkout with/without promo; test_checkout_requires_pickup_point. | Partial: ISSUE-001 |
+| UR-05 | A customer shall be able to view personal order history with total and discounted amounts. | Customer | High | IT | Owner-only date-sorted history; test_order_history_displays_discounted_total checks HTML. | Partial: ISSUE-002 |
+
 
 ---
 
-## 4.4 Detailed Use Cases
+## 3.4 Detailed Use Cases
 
 ### UC-01 — Browse Catalog
 
@@ -354,7 +376,8 @@ graph LR
 
 **Alternative Flows:**
 
-* Invalid promo code → order is created without the discount.
+* Inactive/expired promo code → order is created without the discount.
+* Nonexistent promo ID → checkout fails and the transaction is rolled back.
 * Insufficient stock → transaction is rolled back and an error is shown.
 * Database error → transaction is rolled back.
 * Missing pickup point → checkout validation fails.
@@ -393,7 +416,7 @@ graph LR
 
 **Main Flow:**
 
-1. Customer opens `/orders/`.
+1. Customer opens `/profile/orders/`.
 2. System retrieves orders belonging to the current customer.
 3. Orders are sorted by date descending.
 4. System displays:
@@ -433,155 +456,40 @@ Unpublished articles must not be visible in public views.
 
 ---
 
-### UC-11 — View Contacts and Vacancies
-
-**Actor:** Guest or Customer
-
-**Main Flow:**
-
-1. User opens the relevant informational page.
-2. System retrieves published vacancies and contact information.
-3. System displays the available information.
-
----
-
-### UC-12 — View Statistics and Charts
-
-**Actor:** Superuser
-
-**Preconditions:**
-
-* `is_superuser == True`.
-
-**Main Flow:**
-
-1. Admin opens `/statistics/`.
-2. System computes sales statistics.
-3. System computes:
-
-   * Total sales
-   * Mean
-   * Median
-   * Mode
-4. System computes customer age statistics.
-5. System generates a popularity chart.
-6. Chart is saved to `media/charts/popularity.png`.
-7. Template displays the statistics and chart.
-
-**Alternative Flows:**
-
-* No sales → statistics default to zero where applicable.
-* Matplotlib error → chart is not displayed, but the page remains available.
-* Non-superuser → access is denied.
-
----
-
-### UC-13 — View Currency Rates and Weather
-
-**Actor:** Guest or Customer
-
-**Preconditions:**
-
-* OpenWeatherMap API key is configured for weather information.
-
-**Main Flow:**
-
-1. User opens `/datetime/`.
-2. System requests currency rates from NBRB.
-3. System requests weather data from OpenWeatherMap.
-4. System displays:
-
-   * USD
-   * EUR
-   * RUB
-   * PLN
-   * Minsk weather
-5. System displays the information according to the selected timezone.
-
-**Alternative Flows:**
-
-* API timeout/error → external widget is unavailable, but the rest of the page
-  remains functional.
-* Missing weather API key → weather widget is hidden.
-* Currency API failure → currency data is unavailable without breaking page
-  rendering.
-
----
-
-### UC-14 — Change Timezone
-
-**Actor:** Guest or Customer
-
-**Main Flow:**
-
-1. User selects a timezone.
-2. System validates the timezone.
-3. System stores the timezone in:
-
-```python
-request.session['user_timezone']
-```
-
-4. Date/time widgets use the selected timezone.
-
----
-
 # 4. Functional Requirements
 
-| ID    | Requirement                                                                                               | Related UR | Priority |
-| ----- | --------------------------------------------------------------------------------------------------------- | ---------- | -------- |
-| FR-01 | The system shall display a product catalog with pagination of 12 items per page.                          | UR-01      | High     |
-| FR-02 | The system shall filter products by `ProductType`.                                                        | UR-01      | High     |
-| FR-03 | The system shall filter products by manufacturer.                                                         | UR-01      | High     |
-| FR-04 | The system shall filter products by minimum and maximum price.                                            | UR-01      | High     |
-| FR-05 | The system shall support sorting by price ascending/descending, name ascending/descending, and newest.    | UR-01      | Medium   |
-| FR-06 | The system shall support full-text search by product name and article.                                    | UR-01      | High     |
-| FR-07 | The system shall exclude products where `stock <= 0` from the public catalog.                             | UR-01      | High     |
-| FR-08 | The system shall validate phone numbers against `+375 (XX) XXX-XX-XX`.                                    | UR-02      | High     |
-| FR-09 | The system shall reject registration for users younger than 18.                                           | UR-02      | High     |
-| FR-10 | The system shall create a `Customer` profile linked to the Django `User` after successful registration.   | UR-02      | High     |
-| FR-11 | The system shall add products to a session-based cart with a selected quantity.                           | UR-03      | High     |
-| FR-12 | The system shall prevent adding a quantity greater than available stock.                                  | UR-03      | High     |
-| FR-13 | The system shall allow users to update cart quantities.                                                   | UR-03      | Medium   |
-| FR-14 | The system shall allow users to remove items from the cart.                                               | UR-03      | Medium   |
-| FR-15 | The system shall require authentication before checkout using `LoginRequiredMixin`.                       | UR-04      | High     |
-| FR-16 | The system shall create `Sale` and related `SaleItem` records within a single database transaction.       | UR-04      | High     |
-| FR-17 | The system shall apply valid promo codes to calculate `discounted_total_amount`.                          | UR-04      | High     |
-| FR-18 | The system shall validate promo codes using active status and date range.                                 | UR-04      | High     |
-| FR-19 | The system shall clear the cart after successful checkout.                                                | UR-04      | High     |
-| FR-20 | The system shall display customer order history sorted by date descending.                                | UR-05      | High     |
-| FR-21 | The system shall calculate and display the discount amount for each order.                                | UR-05      | Medium   |
-| FR-22 | The system shall allow customers to edit phone number and birth date in their profile.                    | UR-05      | Medium   |
-| FR-23 | The system shall store reviews linked to a user and optionally to a product.                              | UR-06      | Medium   |
-| FR-24 | The system shall restrict review ratings to the integer range 1–5.                                        | UR-06      | Medium   |
-| FR-25 | The system shall provide superuser-only sales statistics including total, mean, median, and mode.         | UR-07      | Medium   |
-| FR-26 | The system shall calculate customer age statistics including mean, median, minimum, and maximum.          | UR-07      | Medium   |
-| FR-27 | The system shall generate a bar chart of popular product types and save it to `media/charts/`.            | UR-07      | Medium   |
-| FR-28 | The system shall fetch currency rates from NBRB and weather from OpenWeatherMap with a 10-second timeout. | UR-08      | Low      |
-| FR-29 | The system shall degrade gracefully and return `None` when external APIs fail.                            | UR-08      | Low      |
-| FR-30 | The system shall allow the user to set a timezone stored in `request.session['user_timezone']`.           | UR-09      | Low      |
-| FR-31 | The system shall expose application entities through the Django admin panel.                              | —          | Medium   |
-| FR-32 | The system shall display FAQ items ordered by `order` and then `-date_added` where applicable.            | —          | Low      |
-| FR-33 | The system shall display only published articles and vacancies in public views.                           | —          | Medium   |
+| ID | Requirement | Related UR | Priority | Method | Verification | Result |
+| ----- | --------------------------------------------------------------------------------------------------------- | ---------- | -------- | --- | --- | --- |
+| FR-01 | The system shall display a product catalog with pagination of 12 items per page. | UR-01 | High | IT | test_catalog_pagination_and_related_products: 13 products give pages of 12 and 1. | Verified |
+| FR-02 | The system shall filter products by `ProductType`. | UR-01 | High | IT | test_catalog_filters_by_related_entity[category-product_type_id]. | Verified |
+| FR-03 | The system shall filter products by manufacturer. | UR-01 | High | IT | test_catalog_filters_by_related_entity[manufacturer-manufacturer_id]. | Verified |
+| FR-04 | The system shall filter products by minimum and maximum price. | UR-01 | High | IT | Catalog cases price_min=200 and price_max=100 verify inclusive bounds. | Verified |
+| FR-05 | The system shall support case-insensitive substring search by product name and article. | UR-01 | High | IT | Catalog query alp matches Alpha; CAT-B matches article. | Verified |
+| FR-06 | The system shall exclude products where `stock <= 0` from the public catalog. | UR-01 | High | IT | Catalog fixture includes stock=0; default listing excludes it. | Verified |
+| FR-07 | The system shall validate phone numbers against `+375 (XX) XXX-XX-XX`. | UR-02 | High | IT + UT | Invalid registration phone and parameterized phone validator. | Verified |
+| FR-08 | The system shall reject registration for users younger than 18. | UR-02 | High | IT + UT | Under-18 registration; exactly 18 passes and one day younger fails. | Verified |
+| FR-09 | The system shall create a `Customer` profile linked to the Django `User` after successful registration. | UR-02 | High | IT | test_register_login_and_logout_persist_linked_profile asserts User/Customer relation. | Verified |
+| FR-10 | The system shall add products to a session-based cart with a selected quantity. | UR-03 | High | ST | Lifecycle scenario checks selected quantities in session after requests. | Verified |
+| FR-11 | The system shall prevent adding a quantity greater than available stock. | UR-03 | High | IT | Exact-stock boundary and overflow keep prior cart quantity. | Verified |
+| FR-12 | The system shall require authentication before checkout using `LoginRequiredMixin`. | UR-04 | High | IT | test_anonymous_cannot_access_protected_page[checkout]. | Verified |
+| FR-13 | The system shall create `Sale` and related `SaleItem` records within a single database transaction. | UR-04 | High | ST | Failure on second position rolls back Sale/items/stock; retry succeeds. | Verified |
+| FR-14 | The system shall apply valid promo codes to calculate `discounted_total_amount`. | UR-04 | High | ST + UT | Discounted lifecycle checks total 200 → 180; unit discount test uses mocked promo. | Verified |
+| FR-15 | The system shall validate promo codes using active status and date range. | UR-04 | High | UT + IT | Promo active/date-boundary cases and expired checkout without discount. | Verified |
+| FR-16 | The system shall clear the cart after successful checkout. | UR-04 | High | ST | Successful lifecycle scenario checks empty session cart. | Verified |
+| FR-27 | The system shall display customer order history sorted by date descending. | UR-05 | High | IT | test_order_history_is_newest_first_and_excludes_other_customers. | Verified |
 
 ---
 
 # 5. Non-Functional Requirements
 
-| ID     | Category             | Requirement                                                                                                          | Target                            |
-| ------ | -------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| NFR-01 | Performance          | Catalog page response time under normal load                                                                         | < 2 seconds p95                   |
-| NFR-02 | Scalability          | Support concurrent users with SQLite in development and PostgreSQL in production                                     | ≥ 100 concurrent sessions         |
-| NFR-03 | Security             | Passwords shall use Django's default password hashing mechanism and CSRF protection shall be enabled for POST forms. | Django defaults                   |
-| NFR-04 | Security             | Access to statistics shall be restricted to superusers.                                                              | 100% enforcement                  |
-| NFR-05 | Reliability          | External API failures shall not prevent page rendering.                                                              | Graceful fallback                 |
-| NFR-06 | Usability            | UI shall be usable on desktop and tablet displays.                                                                   | Minimum desktop viewport 1280×720 |
-| NFR-07 | Maintainability      | Code shall be organized into Django applications with clear module responsibilities.                                 | Code review                       |
-| NFR-08 | Portability          | Application shall be deployable using Docker on Linux and Windows hosts.                                             | Successful Docker build           |
-| NFR-09 | Internationalization | UI text shall be in Russian; code and comments may use English where applicable.                                     | Code review                       |
-| NFR-10 | Data Integrity       | Order creation and stock updates shall use database transactions.                                                    | `transaction.atomic()`            |
-| NFR-11 | Observability        | Critical operations shall be logged using Python's `logging` module.                                                 | Log entries present               |
-| NFR-12 | Compatibility        | Application shall support Python 3.12+, Django 6.0, and modern evergreen browsers.                                   | Manual verification               |
+| ID | Category | Requirement | Target | Method | Verification | Result |
+| ------ | -------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------- | --- | --- | --- |
+| NFR-01 | Performance | Catalog response time for 200 requests after warm-up, 10 concurrent clients, on a documented host | < 2 seconds p95 | LN | Warm up catalog; send 200 requests with 10 concurrent clients; record host, p95 and HTTP errors. | Not measured |
+| NFR-02 | Scalability | Complete 100 simultaneous authenticated catalog/cart sessions without HTTP 5xx on production PostgreSQL; SQLite is the development database | ≥ 100 concurrent sessions | CR + LN | Inspect active DB engine; run 100 concurrent authenticated sessions against PostgreSQL and count 5xx. | Not verified; active SQLite: ISSUE-003 |
+| NFR-03 | Security | Passwords shall use Django's default password hashing mechanism and CSRF protection shall be enabled for POST forms. | Django defaults | CR + IT | Review Django password/CSRF settings; password hash check after registration; POST without CSRF token gets 403. | Verified locally |
+| NFR-04 | Security | Access to statistics shall be restricted to superusers. | 100% enforcement | IT | Statistics: anonymous redirected, regular user 403, superuser receives aggregates. | Verified |
+| NFR-05 | Maintainability | Code shall be organized into Django applications with clear module responsibilities. | Code review | CR | Compare apps, responsibilities, routes and imports with README architecture/module table. | Verified by source review |
+| NFR-06 | Portability | Application shall be deployable using Docker on Linux and Windows hosts. | Successful Docker build | CR + MT | Build image and run with env file on Linux/Windows; verify migrations, catalog and static/media responses. | Build/runtime not tested; static collection defect: ISSUE-005 |
 
 ---
 
@@ -599,16 +507,16 @@ stateDiagram-v2
     Draft --> Pending : Customer submits checkout form
     Draft --> Abandoned : Session ends / cart cleared manually
 
-    Pending --> Confirmed : Transaction commits successfully
+    Pending --> Confirmed : Sale and items created inside transaction
     Pending --> Failed : Stock insufficient / DB error
 
     Confirmed --> Discounted : Valid promo code applied
-    Confirmed --> AwaitingPickup : No promo code
+    Confirmed --> AwaitingPickup : No valid promo code; commit checkout
 
-    Discounted --> AwaitingPickup : discounted_total_amount computed
+    Discounted --> AwaitingPickup : discounted total computed; commit checkout
 
-    AwaitingPickup --> Completed : Customer collects order
-    AwaitingPickup --> Cancelled : Customer/admin cancellation
+    AwaitingPickup --> Completed : Staff confirms collection via POST
+    AwaitingPickup --> Cancelled : Owner or staff cancels via POST
 
     Completed --> [*]
     Cancelled --> [*]
@@ -620,171 +528,61 @@ stateDiagram-v2
 
 ## 6.2 States
 
-| State          | Description                                                                        | Persistence                       |
-| -------------- | ---------------------------------------------------------------------------------- | --------------------------------- |
-| Draft          | Cart exists in the session; no `Sale` record has been created.                     | `request.session['cart']`         |
-| Pending        | Checkout request has been received and transaction processing has started.         | In-memory                         |
-| Confirmed      | `Sale` and associated `SaleItem` records have been created successfully.           | Database                          |
-| Discounted     | A valid promo code has been applied and the discounted amount has been calculated. | Database                          |
-| AwaitingPickup | Order is ready for collection at a pickup point.                                   | Derived / intended database state |
-| Completed      | Customer has collected the order.                                                  | Intended database state           |
-| Cancelled      | Order has been cancelled.                                                          | Intended database state           |
-| Failed         | Checkout failed and transaction was rolled back.                                   | Not persisted                     |
-| Abandoned      | Cart was cleared or the session ended without checkout.                            | Not persisted                     |
+| State | Description | Persistence | Verification |
+| -------------- | ---------------------------------------------------------------------------------- | --------------------------------- | --- |
+| Draft | Cart exists in the session; no `Sale` record has been created. | `request.session['cart']` | ST: cart session exists; Sale absent. |
+| Pending | Checkout request has been received and transaction processing has started. | In-memory | ST/CR: checkout starts transaction; successful and failing branches. |
+| Confirmed | Sale and items have been created inside checkout; transaction not yet committed. | `Sale.status` inside transaction | ST/IT: persisted intermediate status in model transition test; checkout source review. |
+| Discounted | Valid promo applied and total calculated inside checkout. | `Sale.status` inside transaction | IT: test_confirmed_to_pickup_model_transitions checks discounted status and promo. |
+| AwaitingPickup | Order is ready for collection at a pickup point. | Database (`status=awaiting_pickup`) | ST: status after checkout commit. |
+| Completed | Customer has collected the order. | Database (`Sale.status`) | ST: staff POST collection; status and repeated-transition rejection. |
+| Cancelled | Order has been cancelled. | Database (`Sale.status`) | ST: owner POST cancellation; restored stock and repeated-transition rejection. |
+| Failed | Checkout failed and transaction was rolled back. | Not persisted | ST: checkout rollback leaves no Sale/items and preserves cart. |
+| Abandoned | Cart was cleared or the session ended without checkout. | Not persisted | ST: removing final cart item creates no Sale. |
 
 ---
 
 ## 6.3 State Transitions
 
-| ID  | From           | To             | Event / Condition               | Action                               |
-| --- | -------------- | -------------- | ------------------------------- | ------------------------------------ |
-| T1  | Start          | Draft          | User adds first product         | Update `request.session['cart']`     |
-| T2  | Draft          | Pending        | Valid checkout request          | Validate customer and cart           |
-| T3  | Draft          | Abandoned      | Session ends or cart is cleared | Discard cart                         |
-| T4  | Pending        | Confirmed      | Transaction commits             | Create `Sale` and `SaleItem` records |
-| T5  | Pending        | Failed         | Stock or database error         | Roll back transaction                |
-| T6  | Confirmed      | Discounted     | Promo code is valid             | Recalculate discounted total         |
-| T7  | Confirmed      | AwaitingPickup | No promo code                   | Mark order as ready for pickup       |
-| T8  | Discounted     | AwaitingPickup | Discount calculation completed  | Continue to pickup stage             |
-| T9  | AwaitingPickup | Completed      | Customer collects order         | Complete order                       |
-| T10 | AwaitingPickup | Cancelled      | Customer/admin cancellation     | Cancel order                         |
-| T11 | Completed      | End            | Terminal state                  | —                                    |
-| T12 | Cancelled      | End            | Terminal state                  | —                                    |
-| T13 | Failed         | End            | Terminal state                  | —                                    |
-| T14 | Abandoned      | End            | Terminal state                  | —                                    |
+| ID | From | To | Event / Condition | Action | Verification |
+| --- | -------------- | -------------- | ------------------------------- | ------------------------------------ | --- |
+| T1 | Start | Draft | User adds first product | Update `request.session['cart']` | ST: lifecycle adds items, checks session and absent Sale. |
+| T2 | Draft | Pending | Valid checkout request | Validate customer and cart | ST/CR: lifecycle submits checkout; atomic block starts. |
+| T3 | Draft | Abandoned | Session ends or cart is cleared | Discard cart | ST: test_clear_cart_abandons_draft_without_creating_sale; session expiry behavior reviewed. |
+| T4 | Pending | Confirmed | Sale and items created inside transaction | Create records; final commit occurs after T7/T8 | IT/CR: confirmed model status; lifecycle persists Sale/items in atomic block. |
+| T5 | Pending | Failed | Stock or database error | Roll back transaction | ST: stock and database failures roll back first item too. |
+| T6 | Confirmed | Discounted | Promo valid; item totals recalculated | Persist discounted status | IT/ST: discounted model status and discounted checkout totals. |
+| T7 | Confirmed | AwaitingPickup | No valid promo code | Set awaiting_pickup; commit checkout | IT/ST: no-promo confirmed → awaiting_pickup. |
+| T8 | Discounted | AwaitingPickup | Discount calculation completed | Set awaiting_pickup; commit checkout | IT/ST: discounted → awaiting_pickup; checkout commit. |
+| T9 | AwaitingPickup | Completed | Staff confirms collection via POST | Complete order | ST: completed lifecycle via staff POST. |
+| T10 | AwaitingPickup | Cancelled | Owner or staff cancellation via POST | Cancel order and restore stock | ST: cancelled lifecycle via owner POST and stock restoration. |
+| T11 | Completed | End | Terminal state | — | ST: second complete request rejected with 400. |
+| T12 | Cancelled | End | Terminal state | — | ST: second cancel request rejected with 400. |
+| T13 | Failed | End | Terminal state | — | ST: rollback leaves no order; corrected retry succeeds. |
+| T14 | Abandoned | End | Terminal state | — | ST: abandoned draft creates no database order. |
 
 ---
 
-## 6.4 State Model Limitation
+## 6.4 State Model Implementation
 
-The current implementation does not persist explicit `Completed`,
-`Cancelled`, or `AwaitingPickup` statuses on the `Sale` model.
+`Sale.status` persists `Confirmed`, `Discounted`, `AwaitingPickup`, `Completed`,
+and `Cancelled`. Checkout advances through the intermediate states inside one
+transaction, so only `AwaitingPickup` is visible after a successful commit.
+`Draft` lives in the session, `Pending` exists while the transaction runs,
+and `Failed` / `Abandoned` do not create persistent orders.
 
-These states are therefore conceptual or derived rather than represented
-by a dedicated database field.
+Staff confirm collection using POST `/orders/<id>/complete/`; the customer
+owning the order or staff cancel it using POST `/orders/<id>/cancel/`.
+Both operations are also available as staff actions in the sales admin list.
+Cancellation restores stock while retaining the order and its items for history.
+Cancelled orders are excluded from sales amounts and product sales statistics.
+Terminal states cannot transition again. Existing orders receive the
+`awaiting_pickup` status through migration `0011_sale_status`.
 
-This discrepancy is documented as **ISSUE-001** in the issues section.
-
----
-
-
-# 7. Requirements Verification Matrix
-
-## 7.1 Verification Methods
-
-| Method | Meaning                                                      |
-| ------ | ------------------------------------------------------------ |
-| UT     | Unit test using Django `TestCase` or equivalent              |
-| IT     | Integration test involving application, client, and database |
-| MT     | Manual test                                                  |
-| CR     | Code review or static analysis                               |
-| LN     | Load/performance test                                        |
-| SEC    | Security test                                                |
+Automated verification: `core/tests/test_order_scenarios.py`; requirement
+traceability and execution results: `TESTING.md`.
 
 ---
 
-## 7.2 Business Requirements
-
-| ID    | Verification                                                                                                  | Method |
-| ----- | ------------------------------------------------------------------------------------------------------------- | ------ |
-| BG-01 | Place an order outside normal business hours and confirm creation of a `Sale` record.                         | MT     |
-| BG-02 | Confirm that no manual administrative action is required between checkout submission and `Sale` creation.     | IT     |
-| BG-03 | Create a promo code, apply it during checkout, and confirm that `discounted_total_amount < total_amount`.     | IT     |
-| BG-04 | Create a review as a logged-in user and confirm that it is stored in the database.                            | IT     |
-| BG-05 | Log in as a superuser, open `/statistics/`, and confirm that statistics and the chart are displayed.          | MT     |
-| BG-06 | Open `/datetime/` and confirm that currency and weather information can be displayed.                         | MT     |
-| BG-07 | Attempt registration with an invalid phone number and an under-18 birth date. Both attempts must be rejected. | UT     |
-
----
-
-## 7.3 User Requirements
-
-| ID    | Verification                                                                                           | Method |
-| ----- | ------------------------------------------------------------------------------------------------------ | ------ |
-| UR-01 | Open `/catalog/`, apply filters, and confirm that the resulting queryset matches the selected filters. | IT     |
-| UR-02 | Submit valid registration data and confirm that both `User` and `Customer` are created.                | IT     |
-| UR-03 | Add a product with `quantity=2`, open the cart, and confirm the quantity.                              | IT     |
-| UR-04 | Submit checkout with a valid promo code and confirm that a discounted `Sale` is created.               | IT     |
-| UR-05 | Log in and open `/orders/`; verify ordering by `-sale_date`.                                           | IT     |
-| UR-06 | Submit a review with rating `5` and verify that rating `6` is rejected.                                | UT     |
-| UR-07 | Verify that a superuser can access `/statistics/` and a regular user cannot.                           | SEC    |
-| UR-08 | Mock an NBRB response and verify that four currency rates are parsed.                                  | UT     |
-| UR-09 | Submit `/set-timezone/` with `Europe/Minsk` and verify the session key.                                | IT     |
-
----
-
-## 7.4 Functional Requirements
-
-| ID    | Verification                                                                                 | Method |
-| ----- | -------------------------------------------------------------------------------------------- | ------ |
-| FR-01 | Verify catalog pagination is configured for 12 items per page.                               | CR     |
-| FR-02 | Open `/catalog/?category=1` and verify that all results belong to the selected product type. | IT     |
-| FR-03 | Open `/catalog/?manufacturer=1` and verify manufacturer filtering.                           | IT     |
-| FR-04 | Open `/catalog/?price_min=100&price_max=500` and verify the price range.                     | IT     |
-| FR-05 | Open `/catalog/?sort=price_asc` and verify ascending order.                                  | IT     |
-| FR-06 | Search for a product by name or article and verify matching results.                         | IT     |
-| FR-07 | Create a product with `stock=0` and verify that it is absent from the public catalog.        | IT     |
-| FR-08 | Verify that `RegisterForm.clean_phone('123')` raises `ValidationError`.                      | UT     |
-| FR-09 | Verify that an under-18 birth date raises `ValidationError`.                                 | UT     |
-| FR-10 | Submit valid registration and verify that a `Customer` is linked to the new user.            | IT     |
-| FR-11 | Add an item to the cart and verify `session['cart']` contains the requested quantity.        | IT     |
-| FR-12 | Attempt to add more items than available stock and verify that the cart is unchanged.        | IT     |
-| FR-13 | Update a cart item quantity and verify the new value.                                        | IT     |
-| FR-14 | Remove a cart item and verify that its session entry is deleted.                             | IT     |
-| FR-15 | Request `/checkout/` anonymously and verify redirection to login.                            | IT     |
-| FR-16 | Force an exception during checkout and verify that no `Sale` remains in the database.        | IT     |
-| FR-17 | Apply a valid promo code and verify the discounted total.                                    | IT     |
-| FR-18 | Test an expired promo code and verify that it is considered invalid.                         | UT     |
-| FR-19 | Complete checkout and verify that the session cart is empty.                                 | IT     |
-| FR-20 | Create multiple sales and verify descending date order.                                      | IT     |
-| FR-21 | Verify `discount == total_amount - discounted_total_amount`.                                 | UT     |
-| FR-22 | Update the customer's phone number and verify the database change.                           | IT     |
-| FR-23 | Create a review without a product association and verify that it is stored.                  | UT     |
-| FR-24 | Verify that the review rating field has minimum and maximum validation of 1 and 5.           | CR     |
-| FR-25 | Compare calculated sales aggregates with the statistics view context.                        | IT     |
-| FR-26 | Calculate ages of known customers and compare them with the statistics context.              | IT     |
-| FR-27 | Run chart generation and verify `media/charts/popularity.png` exists.                        | IT     |
-| FR-28 | Mock a requests timeout and verify that the external API function returns `None`.            | UT     |
-| FR-29 | Remove the weather API key and verify that `get_weather()` returns `None`.                   | UT     |
-| FR-30 | Set a timezone and verify that `/datetime/` uses the selected timezone.                      | IT     |
-| FR-31 | Verify that application models are registered in the Django admin site.                      | IT     |
-| FR-32 | Create FAQ entries with different order values and verify the required ordering.             | IT     |
-| FR-33 | Create unpublished articles/vacancies and verify that they are not visible in public views.  | IT     |
-
----
-
-## 7.5 Non-Functional Requirements
-
-| ID     | Verification                                                                                            | Method |
-| ------ | ------------------------------------------------------------------------------------------------------- | ------ |
-| NFR-01 | Load `/catalog/` using a load-testing tool with 100 users and verify p95 response time below 2 seconds. | LN     |
-| NFR-02 | Run the production configuration using PostgreSQL and test 100 concurrent sessions.                     | LN     |
-| NFR-03 | Inspect CSRF middleware and password hashing configuration.                                             | SEC    |
-| NFR-04 | Log in as a regular user and request `/statistics/`; verify access is denied.                           | SEC    |
-| NFR-05 | Mock external API failures and verify that `/datetime/` still returns successfully.                     | IT     |
-| NFR-06 | Manually test the UI at 1280×720 and a tablet viewport.                                                 | MT     |
-| NFR-07 | Review application structure, responsibilities, and imports.                                            | CR     |
-| NFR-08 | Build and run the Docker image on supported hosts.                                                      | MT     |
-| NFR-09 | Review templates and source code for language consistency.                                              | CR     |
-| NFR-10 | Review checkout and stock-update code for transaction handling.                                         | CR     |
-| NFR-11 | Perform authentication, cart, and checkout operations and inspect log output.                           | MT     |
-| NFR-12 | Verify Python/Django versions and test the application in supported browsers.                           | MT     |
-
----
-
-## 7.6 Rewritten Requirements
-
-The following requirements use measurable criteria because the original
-wording was too vague to verify objectively.
-
-| Original Requirement                | Problem                        | Rewritten Requirement                                                                                                              |
-| ----------------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| "The site should be fast."          | No measurable target.          | Catalog response time shall be below 2 seconds at p95 under the defined test load.                                                 |
-| "The site should be secure."        | Too broad to test.             | Passwords shall use Django's supported password hashing mechanism and CSRF protection shall be enabled for POST forms.             |
-| "The site should be user-friendly." | Subjective.                    | The UI shall be usable at a 1280×720 desktop viewport and a supported tablet viewport.                                             |
-| "External APIs should work."        | No failure behavior specified. | External API calls shall use a defined timeout and return a safe fallback when unavailable.                                        |
-| "Statistics should be accurate."    | No calculation definition.     | Sales and customer statistics shall use explicitly defined mean, median, mode, minimum, and maximum calculations where applicable. |
-
----
-
-
+Open discrepancies: [ISSUES.md](ISSUES.md). Specifying a verification method
+does not imply every requirement is implemented or every measurement has passed.

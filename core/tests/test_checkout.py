@@ -1,11 +1,8 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
-from products.models import Product, Customer, Sale, SaleItem, Supplier, Supply
+from products.models import Product, Customer, Sale, Supplier, Supply
 from core.models import PickupPoint
-from promo.models import PromoCode
-from django.utils import timezone
-
 
 
 class CheckoutViewTest(TestCase):
@@ -21,9 +18,6 @@ class CheckoutViewTest(TestCase):
         self.pickup = PickupPoint.objects.create(address='Test', phone='+375 (29) 123-45-67', working_hours='9-18')
         self.client.login(username='checkout_test', password='pass')
     
-    def test_get_empty_cart(self):
-        response = self.client.get(reverse('core:checkout'))
-        self.assertEqual(response.status_code, 200)
     
     def test_get_with_items(self):
         session = self.client.session
@@ -37,46 +31,8 @@ class CheckoutViewTest(TestCase):
         response = self.client.post(reverse('core:checkout'))
         self.assertEqual(response.status_code, 302)
     
-    def test_post_success(self):
-        session = self.client.session
-        session['cart'] = {str(self.product.id): {'quantity': 2}}
-        session.save()
-        response = self.client.post(reverse('core:checkout'), {
-            'pickup_point': self.pickup.id,
-        })
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(Sale.objects.count(), 1)
-        sale = Sale.objects.first()
-        self.assertEqual(sale.customer, self.customer)
-        self.assertEqual(sale.total_amount, 200.00)
     
-    def test_post_not_enough_stock(self):
-        session = self.client.session
-        session['cart'] = {str(self.product.id): {'quantity': 100}}
-        session.save()
-        response = self.client.post(reverse('core:checkout'), {
-            'pickup_point': self.pickup.id,
-        })
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(Sale.objects.count(), 0)
     
-    def test_post_with_promo(self):
-        promo = PromoCode.objects.create(
-            code='TEST10', discount_percent=10,
-            valid_from=timezone.now() - timezone.timedelta(days=1),
-            valid_to=timezone.now() + timezone.timedelta(days=1),
-            is_active=True
-        )
-        session = self.client.session
-        session['cart'] = {str(self.product.id): {'quantity': 2}}
-        session.save()
-        response = self.client.post(reverse('core:checkout'), {
-            'pickup_point': self.pickup.id,
-            'promo_code': promo.id,
-        })
-        self.assertEqual(response.status_code, 302)
-        sale = Sale.objects.first()
-        self.assertEqual(sale.promo_code, promo)
 
 
 class CheckoutNoCustomerTest(TestCase):

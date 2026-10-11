@@ -1,6 +1,6 @@
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import UserPassesTestMixin
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Q, F
 from products.models import Sale, SaleItem, Product, ProductType, Customer
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
@@ -23,7 +23,8 @@ class StatisticsView(UserPassesTestMixin, TemplateView):
 
         context['products_sorted'] = Product.objects.order_by('name')
 
-        total_sales = Sale.objects.aggregate(
+        sales = Sale.objects.exclude(status=Sale.Status.CANCELLED)
+        total_sales = sales.aggregate(
             total=Sum('total_amount'),
             total_discounted=Sum('discounted_total_amount'),
             count=Count('id')
@@ -32,7 +33,7 @@ class StatisticsView(UserPassesTestMixin, TemplateView):
         context['total_discounted_sales'] = total_sales['total_discounted'] or 0
         context['total_sales_count'] = total_sales['count'] or 0
 
-        sale_amounts = list(Sale.objects.values_list('total_amount', flat=True))
+        sale_amounts = list(sales.values_list('total_amount', flat=True))
         if sale_amounts:
             context['avg_sale'] = sum(sale_amounts) / len(sale_amounts)
             sorted_amounts = sorted(sale_amounts)
@@ -74,21 +75,23 @@ class StatisticsView(UserPassesTestMixin, TemplateView):
             context['total_customers_with_age'] = 0
 
         popular_types = ProductType.objects.annotate(
-            total_sold=Sum('product__saleitem__quantity')
+            total_sold=Sum('product__saleitem__quantity',
+                           filter=~Q(product__saleitem__sale__status=Sale.Status.CANCELLED))
         ).order_by('-total_sold')
         context['popular_types'] = popular_types[:5]
         context['most_popular_type'] = popular_types.first()
 
         profitable_types = ProductType.objects.annotate(
-            total_revenue=Sum('product__saleitem__quantity') *
-                          Sum('product__price')
+            total_revenue=Sum(F('product__saleitem__quantity') * F('product__saleitem__unit_price'),
+                              filter=~Q(product__saleitem__sale__status=Sale.Status.CANCELLED))
         ).order_by('-total_revenue')
         context['profitable_types'] = profitable_types[:5]
         context['most_profitable_type'] = profitable_types.first()
 
         top_products = Product.objects.annotate(
-            total_sold=Sum('saleitem__quantity'),
-            revenue=Sum('saleitem__quantity') * Sum('saleitem__unit_price')
+            total_sold=Sum('saleitem__quantity', filter=~Q(saleitem__sale__status=Sale.Status.CANCELLED)),
+            revenue=Sum(F('saleitem__quantity') * F('saleitem__unit_price'),
+                        filter=~Q(saleitem__sale__status=Sale.Status.CANCELLED))
         ).filter(total_sold__isnull=False).order_by('-total_sold')[:10]
         context['top_products'] = top_products
 

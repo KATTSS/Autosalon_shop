@@ -33,7 +33,7 @@ def format_date(value, tz_name='Europe/Minsk'):
         return ''
     
     if timezone.is_naive(value):
-        value = timezone.make_aware(value, timezone.utc)
+        value = timezone.make_aware(value, pytz.UTC)
     
     tz = pytz.timezone(tz_name)
     value_tz = value.astimezone(tz)
@@ -47,7 +47,7 @@ def format_date_utc(value):
         return ''
     
     if timezone.is_naive(value):
-        value = timezone.make_aware(value, timezone.utc)
+        value = timezone.make_aware(value, pytz.UTC)
     
     value_utc = value.astimezone(pytz.UTC)
     return value_utc.strftime('%d/%m/%Y %H:%M:%S')

@@ -9,5 +9,6 @@ class NewsListView(ListView):
 
 class NewsDetailView(DetailView):
     model = Article
+    queryset = Article.objects.filter(is_published=True)
     template_name = 'news/detail.html'
     context_object_name = 'article'

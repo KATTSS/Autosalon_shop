@@ -21,7 +21,7 @@ class UserValidatorMixin:
     def validate_birth_date(value):
         if value:
             today = timezone.now().date()
-            adult_date = value.replace(year=value.year + 18)
+            adult_date = value + relativedelta(years=18)
             if adult_date > today:
                 raise ValidationError('Пользователь должен быть старше 18 лет')
     

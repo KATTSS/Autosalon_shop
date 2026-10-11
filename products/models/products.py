@@ -59,7 +59,7 @@ class Product(models.Model):
         
         total_sold = SaleItem.objects.filter(
             product=self
-        ).aggregate(
+        ).exclude(sale__status='cancelled').aggregate(
             total=Sum('quantity')
         )['total'] or 0
         

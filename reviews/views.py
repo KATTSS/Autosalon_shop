@@ -5,6 +5,9 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Review
+from django.forms import modelform_factory
+
+ReviewForm = modelform_factory(Review, fields=['text', 'rating', 'product'])
 
 
 class ReviewListView(ListView):
@@ -19,25 +22,18 @@ class ReviewListView(ListView):
 
 @login_required(login_url='core:login')
 def review_create(request):
-    if request.method == 'POST':
-        text = request.POST.get('text', '')
-        rating = request.POST.get('rating', '')
-        product_id = request.POST.get('product', '') or None
-        
-        if text and rating:
-            Review.objects.create(
-                user=request.user,
-                text=text,
-                rating=rating,
-                product_id=product_id
-            )
-            messages.success(request, 'Отзыв отправлен на модерацию!')
-            return redirect('reviews:list')
-    
+    form = ReviewForm(request.POST if request.method == 'POST' else None)
+    if request.method == 'POST' and form.is_valid():
+        review = form.save(commit=False)
+        review.user = request.user
+        review.save()
+        messages.success(request, 'Отзыв отправлен на модерацию!')
+        return redirect('reviews:list')
+
     from products.models import Product
     products = Product.objects.all()
     ratings = range(1, 6)
-    return render(request, 'reviews/add.html', {'products': products, 'ratings': ratings})
+    return render(request, 'reviews/add.html', {'products': products, 'ratings': ratings, 'form': form})
 
 
 class ReviewUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):

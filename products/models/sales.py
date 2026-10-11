@@ -5,6 +5,41 @@ from decimal import Decimal
 
 class Sale(models.Model):
     """Продажа"""
+    class Status(models.TextChoices):
+        CONFIRMED = 'confirmed', 'Подтверждён'
+        DISCOUNTED = 'discounted', 'Скидка применена'
+        AWAITING_PICKUP = 'awaiting_pickup', 'Ожидает получения'
+        COMPLETED = 'completed', 'Получен'
+        CANCELLED = 'cancelled', 'Отменён'
+
+    status = models.CharField(max_length=20, choices=Status.choices,
+                              default=Status.AWAITING_PICKUP, verbose_name='Статус')
+
+    def transition_to(self, target):
+        """Атомарный переход; отмена возвращает резерв товаров на склад."""
+        allowed = {
+            self.Status.CONFIRMED: {self.Status.DISCOUNTED, self.Status.AWAITING_PICKUP},
+            self.Status.DISCOUNTED: {self.Status.AWAITING_PICKUP},
+            self.Status.AWAITING_PICKUP: {self.Status.COMPLETED, self.Status.CANCELLED},
+        }
+        with transaction.atomic():
+            current = type(self).objects.select_for_update().get(pk=self.pk)
+            if target not in allowed.get(current.status, set()):
+                raise ValueError('Недопустимый переход состояния заказа')
+            if target == self.Status.DISCOUNTED and not (
+                current.promo_code and current.promo_code.is_valid()
+            ):
+                raise ValueError('Для скидки необходим действующий промокод')
+            current.status = target
+            current.save(update_fields=['status'])
+            if target == self.Status.CANCELLED:
+                from .products import Product
+                for product in Product.objects.select_for_update().filter(
+                    pk__in=current.items.values_list('product_id', flat=True)
+                ).order_by('pk'):
+                    product.save(update_fields=['stock'])
+            self.status = current.status
+
     customer = models.ForeignKey(
         'Customer',
         on_delete=models.CASCADE,
@@ -114,6 +149,10 @@ class SaleItem(models.Model):
 
     def save(self, *args, **kwargs):
         """Сохранение с автоматическим указанием цены и проверкой остатков"""
+        if self.quantity < 1:
+            raise ValueError('Количество должно быть положительным')
+        if self.sale.status in {Sale.Status.COMPLETED, Sale.Status.CANCELLED}:
+            raise ValueError('Нельзя изменять позиции завершённого заказа')
         if self.pk is None:
             if not self.unit_price:
                 self.unit_price = self.product.price

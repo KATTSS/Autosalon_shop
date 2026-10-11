@@ -18,6 +18,7 @@
 {% if user.is_authenticated %}
 <form method="post" style="max-width: 600px; margin-top: 20px;">
     {% csrf_token %}
+    {{ form.errors }}
 
     <div style="margin-bottom: 20px;">
         <label style="display: block; margin-bottom: 8px; font-weight: bold;">Оценка:</label>
@@ -25,7 +26,7 @@
             style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;">
             <option value="">Выберите оценку</option>
             {% for r in ratings %}
-            <option value="{{ r }}">{{ r }}</option>
+            <option value="{{ r }}" {% if form.rating.value|stringformat:"s" == r|stringformat:"s" %}selected{% endif %}>{{ r }}</option>
             {% endfor %}
         </select>
     </div>
@@ -33,7 +34,7 @@
     <div style="margin-bottom: 20px;">
         <label style="display: block; margin-bottom: 8px; font-weight: bold;">Текст отзыва:</label>
         <textarea name="text" rows="5" required
-            style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;"></textarea>
+            style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;">{{ form.text.value|default_if_none:"" }}</textarea>
     </div>
 
     <div style="margin-bottom: 20px;">

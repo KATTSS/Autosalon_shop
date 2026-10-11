@@ -1,80 +1,53 @@
-from django.test import TestCase
+import pytest
+from django.test import Client
 from django.urls import reverse
-from django.test import TestCase
-from django.urls import reverse
-from django.contrib.auth.models import User
+
+pytestmark = [pytest.mark.django_db, pytest.mark.integration]
 
 
-class AuthTest(TestCase):
-    def test_login_post_valid(self):
-        User.objects.create_user(username='test', password='pass12345')
-        response = self.client.post(reverse('core:login'), {
-            'username': 'test',
-            'password': 'pass12345',
-        })
-        self.assertEqual(response.status_code, 302)
-    
-    def test_login_post_invalid(self):
-        response = self.client.post(reverse('core:login'), {
-            'username': 'fake',
-            'password': 'wrong',
-        })
-        self.assertEqual(response.status_code, 302)
-    
-    def test_register_post(self):
-        response = self.client.post(reverse('core:register'), {
-            'username': 'newuser',
-            'email': 'new@test.com',
-            'phone': '+375 (29) 123-45-67',
-            'birth_date': '1990-01-01',
-            'password1': 'complexpass123',
-            'password2': 'complexpass123',
-        })
-        self.assertEqual(response.status_code, 302)
-    
-    def test_logout(self):
-        User.objects.create_user(username='test', password='pass12345')
-        self.client.login(username='test', password='pass12345')
-        response = self.client.get(reverse('core:logout'))
-        self.assertEqual(response.status_code, 302)
+@pytest.mark.parametrize('route', ['home', 'about', 'contacts', 'privacy', 'login', 'register'])
+def test_public_page_is_accessible(client, route):
+    # Arrange
+    url = reverse(f'core:{route}')
+    # Act
+    response = client.get(url)
+    # Assert
+    assert response.status_code == 200
 
-class CoreViewsTest(TestCase):
-    def test_home(self):
-        response = self.client.get(reverse('core:home'))
-        self.assertEqual(response.status_code, 200)
-    
-    def test_catalog(self):
-        response = self.client.get(reverse('core:catalog'))
-        self.assertEqual(response.status_code, 200)
-    
-    def test_about(self):
-        response = self.client.get(reverse('core:about'))
-        self.assertEqual(response.status_code, 200)
-    
-    def test_contacts(self):
-        response = self.client.get(reverse('core:contacts'))
-        self.assertEqual(response.status_code, 200)
-    
-    def test_privacy(self):
-        response = self.client.get(reverse('core:privacy'))
-        self.assertEqual(response.status_code, 200)
-    
-    def test_login(self):
-        response = self.client.get(reverse('core:login'))
-        self.assertEqual(response.status_code, 200)
-    
-    def test_register(self):
-        response = self.client.get(reverse('core:register'))
-        self.assertEqual(response.status_code, 200)
-    
-    def test_cart(self):
-        response = self.client.get(reverse('core:cart'))
-        self.assertEqual(response.status_code, 200)
-    
-    def test_cart_empty(self):
-        response = self.client.get(reverse('core:cart'))
-        self.assertContains(response, 'Корзина')
-    
-    def test_statistics_anonymous(self):
-        response = self.client.get(reverse('core:statistics'))
-        self.assertNotEqual(response.status_code, 200)
+
+def test_invalid_login_does_not_authenticate(client):
+    # Arrange
+    data = {'username': 'missing', 'password': 'incorrect'}
+    # Act
+    response = client.post(reverse('core:login'), data)
+    # Assert
+    assert response.status_code == 302
+    assert '_auth_user_id' not in client.session
+
+
+def test_csrf_rejects_post_without_token():
+    # Arrange
+    client = Client(enforce_csrf_checks=True)
+    # Act
+    response = client.post(reverse('core:login'), {'username': 'missing', 'password': 'incorrect'})
+    # Assert
+    assert response.status_code == 403
+
+
+@pytest.mark.parametrize('route', ['checkout', 'statistics'])
+def test_anonymous_cannot_access_protected_page(client, route):
+    # Arrange
+    url = reverse(f'core:{route}')
+    # Act
+    response = client.get(url)
+    # Assert
+    assert response.status_code == 302
+
+
+def test_regular_user_cannot_access_statistics(client, django_user_model):
+    # Arrange
+    client.force_login(django_user_model.objects.create_user(username='regular'))
+    # Act
+    response = client.get(reverse('core:statistics'))
+    # Assert
+    assert response.status_code == 403

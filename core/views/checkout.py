@@ -42,7 +42,7 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
                     'item_total': item_total,
                 })
             except Product.DoesNotExist:
-                logger.error(f'Checkout error for {request.user}: {str(e)}')
+                logger.warning('Товар %s удалён из каталога', product_id)
                 continue
         
         context.update({
@@ -89,6 +89,7 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
                 # Создаём продажу
                 sale = Sale.objects.create(
                     customer=customer,
+                    status=Sale.Status.CONFIRMED,
                     pickup_point_id=request.POST.get('pickup_point'),
                     promo_code=promo_code,
                     sale_date=timezone.now(),
@@ -111,6 +112,10 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
                         unit_price=product.price,
                     )
                 
+                if promo_code:
+                    sale.transition_to(Sale.Status.DISCOUNTED)
+                sale.transition_to(Sale.Status.AWAITING_PICKUP)
+
                 # Очищаем корзину
                 request.session['cart'] = {}
                 messages.success(

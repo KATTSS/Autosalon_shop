@@ -47,7 +47,14 @@ def add_to_cart(request, product_id):
         return redirect('core:catalog')
     
     product = get_object_or_404(Product, id=product_id)
-    quantity = int(request.POST.get('quantity', 1))
+    try:
+        quantity = int(request.POST.get('quantity', 1))
+    except (ValueError, TypeError):
+        messages.error(request, 'Количество должно быть целым числом')
+        return redirect('core:cart')
+    if quantity < 1:
+        messages.error(request, 'Количество должно быть положительным')
+        return redirect('core:cart')
     
     if quantity > product.stock:
         messages.error(
@@ -91,7 +98,14 @@ def remove_from_cart(request, product_id):
 def update_cart(request, product_id):
     """Обновление количества товара"""
     if request.method == 'POST':
-        quantity = int(request.POST.get('quantity', 1))
+        try:
+            quantity = int(request.POST.get('quantity', 1))
+        except (ValueError, TypeError):
+            messages.error(request, 'Количество должно быть целым числом')
+            return redirect('core:cart')
+        if quantity < 0:
+            messages.error(request, 'Количество не может быть отрицательным')
+            return redirect('core:cart')
         cart = request.session.get('cart', {})
         
         product = get_object_or_404(Product, id=product_id)
@@ -100,6 +114,9 @@ def update_cart(request, product_id):
             messages.error(request, f'Максимальное количество: {product.stock}')
             return redirect('core:cart')
         
+        if str(product_id) not in cart:
+            return redirect('core:cart')
+
         if quantity > 0:
             cart[str(product_id)]['quantity'] = quantity
         else:

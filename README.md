@@ -1,312 +1,147 @@
 # Autosalon Shop
 
-A web application for an auto details store.
+Интернет-магазин автомобильных запчастей. Покупатели находят товары, управляют
+корзиной, оформляют заказ с самовывозом и просматривают историю. Магазин получает
+учёт поставок, остатков и продаж, промокоды, отзывы и статистику.
 
-## Tech Stack
+Целевые пользователи: посетители каталога, зарегистрированные покупатели,
+сотрудники, выдающие заказы, и администраторы магазина. Статистика доступна
+суперпользователям; выдачу заказа подтверждает сотрудник.
 
-| Component | Version / Description |
+## Стек
+
+| Компонент | Используется |
 |---|---|
-| Python | 3.12 |
-| Django | 6.0 |
-| Database | SQLite (development) / PostgreSQL (production) |
-| Containerization | Docker, Docker Compose |
-| Visualization | Matplotlib |
-| External APIs | OpenWeatherMap, NBRB (currency rates) |
-| Utilities | `pytz`, `python-dateutil`, `requests` |
+| Язык | Python 3.12, HTML/CSS |
+| Фреймворк | Django 6.0, шаблоны Django |
+| СУБД | SQLite — текущая активная конфигурация |
+| Развёртывание | Gunicorn, Docker, Docker Compose |
+| Дополнительные библиотеки | requests, Matplotlib, pytz, python-dateutil, Pillow |
+| Тестирование | pytest, pytest-django, pytest-cov |
 
----
+Точные версии зависимостей указаны в `requirements.txt`. В Compose есть контейнер
+PostgreSQL 15, но приложение пока не подключается к нему: [ISSUE-003](ISSUES.md#issue-003).
 
-## Features
+## Архитектура
 
-- Product catalog with filtering and search
-- Shopping cart and order checkout
-- User authentication and registration
-- Personal account with order history
-- Reviews with CRUD operations
-- Promo codes
-- News articles
-- FAQ
-- Job vacancies
-- Statistics (mean, median, mode of sales)
-- Data visualization (charts)
-- Text-based calendar
-- Timezone support
-- Phone number and age validation (18+)
-- External APIs (currency rates, weather)
+Django MVT: URL-маршруты вызывают представления, представления работают с моделями
+через ORM и формируют HTML из шаблонов. Корзина и часовой пояс хранятся в сессии.
 
-## Architecture
-
-The project is built on **Django (MVT pattern)** and is divided into independent applications (`apps`), each responsible for its own domain area. Interaction between applications is organized through models and Python-level imports, without circular dependencies.
-
-### Main Components
-
-```text
-+-----------------------------------------------------------------+
-|                         CLIENT (Browser)                        |
-+--------------------------------+--------------------------------+
-                                 | HTTP / HTTPS
-                                 v
-+-----------------------------------------------------------------+
-|                    DJANGO (autosalon/settings.py)               |
-|  +-----------------------------------------------------------+  |
-|  |                    URL Routing (urls.py)                  |  |
-|  +-----------------------------------------------------------+  |
-|         |              |              |              |          |
-|         v              v              v              v          |
-|   +----------+   +----------+   +----------+   +----------+     | 
-|   |   core   |   | products |   |   news   |   |  promo   |     |
-|   |  (views) |   | (models) |   | (models) |   | (models) |     |
-|   +----+-----+   +----+-----+   +----+-----+   +----+-----+     |
-|        |              |              |              |           |
-|        +--------------+--------------+--------------+           |
-|                              |                                  |
-|                              v                                  |
-|                    +------------------+                         |
-|                    |   Django ORM     |                         |
-|                    +--------+---------+                         |
-+-----------------------------+-----------------------------------+
-                              |
-              +---------------+---------------+
-              v               v               v
-        +----------+   +-----------+   +--------------+
-        |  SQLite  |   | PostgreSQL|   |  File System |
-        |  (dev)   |   |  (prod)       |   (media)    |
-        +----------+   +-----------+   +--------------+
-                                              |
-                                              v
-                                       +-------------+
-                                       |   media/    |
-                                       |  (images,   |
-                                       |   charts)   |
-                                       +-------------+
+```mermaid
+flowchart LR
+    Browser[Браузер] --> Routes[autosalon/urls.py и маршруты приложений]
+    Routes --> Views[Представления и формы Django]
+    Views --> Templates[HTML-шаблоны]
+    Templates --> Browser
+    Views --> ORM[Модели и Django ORM]
+    ORM --> DB[(SQLite)]
+    Views --> Session[Сессия: корзина и часовой пояс]
+    Session --> DB
+    Views --> Services[core/services/api_services.py]
+    Services --> NBRB[NBRB: курсы валют]
+    Services --> Weather[OpenWeatherMap: погода]
+    Views --> Charts[Matplotlib: графики]
+    Charts --> Files[media и staticfiles]
+    ORM --> Files
+    Admin[Django admin] --> ORM
 ```
 
-### External services
+Связи данных: `User → Customer → Sale → SaleItem → Product`;
+`Product → ProductType/Manufacturer`; `Supply → Product/Supplier`;
+`Sale → PromoCode/PickupPoint`; `Review → User/Product`.
 
-```text
-+------------------+         +-------------------------+
-|  OpenWeatherMap  |<--------|  core/services/         |
-|      API         |         |  api_services.py        |
-+------------------+         |  get_weather()          |
-                             +------------+------------+
-                                          |
-+------------------+                      |
-|    NBRB API     |<---------------------+
-|    (currency)   |         get_currency_rates()
-+------------------+
-```
+## Модули и ответственность
 
-### Main model relations
-
-```text
-User (Django auth) --1:1--> Customer --1:N--> Sale --1:N--> SaleItem
-                              |                |                |
-                              |                |                v
-                              |                |            Product
-                              |                v                |
-                              |           PromoCode             |
-                              |                                 |
-                              v                                 v
-                          Review <--------------------------- Product
-                                                              |
-                              +-------------------------------+
-                              v                               v
-                        Manufacturer                    ProductType
-                              ^                               ^
-                              |                               |
-                        Supply <-- Product --M:N--> Supplier --+
-                              |                               |
-                              v                               v
-                          Employee                       Employee
-                                                              |
-                                                              v
-                                                     PickupPoint (core)
-```
-
-
-## Modules Overview
-
-### `core` - Application Core
-
-| File | Responsibility |
+| Модуль | Ответственность |
 |---|---|
-| `views/home.py` | Home page, "About Company", privacy policy |
-| `views/catalog.py` | Product catalog with filtering, search, sorting; product detail page |
-| `views/cart.py` | Cart: view, add, remove, update quantity |
-| `views/checkout.py` | Order checkout, creation of `Sale` and `SaleItem`, promo code application |
-| `views/auth.py` | Registration, login, logout; extended `RegisterForm` with 18+ validation |
-| `views/profile.py` | Personal account, order history, profile editing |
-| `views/contacts.py` | Contacts page (employees, pickup points) |
-| `views/calendar.py` | Date/time demo, timezone switching, currency rates and weather output |
-| `views/statistics.py` | Statistics (mean, median, mode), chart generation via Matplotlib |
-| `models.py` | `CompanyInfo`, `Employee`, `PickupPoint` |
-| `services/api_services.py` | Integration with external APIs: NBRB (currency rates), OpenWeatherMap (weather) |
+| `autosalon` | Настройки, корневые URL, ASGI/WSGI |
+| `core/views/home.py`, `contacts.py` | Главная, информация о компании, контакты, политика конфиденциальности |
+| `core/views/catalog.py` | Каталог, поиск, фильтры, сортировка, карточка товара |
+| `core/views/cart.py` | Добавление, изменение и удаление позиций корзины |
+| `core/views/checkout.py`, `orders.py` | Атомарное оформление, применение скидки, выдача и отмена заказа |
+| `core/views/auth.py`, `profile.py` | Регистрация, вход/выход, профиль и история заказов |
+| `core/views/calendar.py`, `statistics.py` | Часовые пояса, внешние данные, статистика и графики |
+| `core/models.py` | Компания, сотрудники, точки самовывоза |
+| `core/services/api_services.py` | HTTP-запросы NBRB и OpenWeatherMap, безопасный результат при ошибке |
+| `products/models/products.py`, `categories.py`, `manufacturers.py` | Товары, типы, производители и расчёт остатков |
+| `products/models/suppliers.py`, `supplies.py` | Поставщики и поставки |
+| `products/models/customers.py`, `validator.py` | Профиль покупателя, проверка телефона и возраста |
+| `products/models/sales.py` | Заказ, позиции, суммы, статусы и допустимые переходы |
+| `products/middleware.py`, `templatetags/datetime_tags.py` | Часовой пояс запроса и форматирование дат |
+| `news`, `faq`, `vacancies` | Новости, вопросы-ответы и вакансии с фильтрацией публикации/активности |
+| `promo` | Промокоды, даты действия и список акций |
+| `reviews` | Отзывы, модерация, создание/редактирование/удаление владельцем |
+| `*/admin.py` | Регистрация моделей и административные операции |
 
-### `products` - Products and Sales
+## Точки интеграции
 
-| File | Responsibility |
+| Точка | Назначение и настройки |
 |---|---|
-| `models/products.py` | `Product` - product, stock calculation `calculate_stock()` |
-| `models/categories.py` | `ProductType` - product type/category |
-| `models/manufacturers.py` | `Manufacturer` - manufacturer |
-| `models/suppliers.py` | `Supplier` - supplier with phone validation |
-| `models/supplies.py` | `Supply` - product supply (Product <-> Supplier link) |
-| `models/sales.py` | `Sale`, `SaleItem` - sale and sold items |
-| `models/customers.py` | `Customer` - customer profile (linked to `User`) |
-| `models/validator.py` | `UserValidatorMixin` - shared phone and age validation |
+| SQLite | Django ORM; `db.sqlite3`; миграции; транзакции оформления и обновления остатков |
+| Django auth и sessions | Учётные записи, права, связанный Customer; корзина и timezone в сессии |
+| NBRB HTTP API | USD/EUR/RUB/PLN; тайм-аут 10 секунд; при ошибке возвращается `None` |
+| OpenWeatherMap HTTP API | Погода Минска; `OPENWEATHER_API_KEY`; тайм-аут 10 секунд; при ошибке/отсутствии ключа `None` |
+| Файловая система | `media/company`, `media/employees`, `media/news`; график `media/charts/popularity.png`; статические файлы `staticfiles` |
+| Журнал | `logs/django.log`, ротация, настройка `LOG_LEVEL` |
 
-### `news` - News
+При `DEBUG=False` Django сам не раздаёт media. Для показа изображений/графиков
+нужна раздача файлов веб-сервером; текущий пробел описан в [ISSUE-004](ISSUES.md#issue-004).
 
-| File | Responsibility |
-|---|---|
-| `models.py` | `Article` - articles/news with slug, image, dates |
+## Установка и запуск
 
-### `promo` - Promo Codes
-
-| File | Responsibility |
-|---|---|
-| `models.py` | `PromoCode` - discount coupon, `is_valid()` check, date validation |
-
-### `reviews` - Reviews
-
-| File | Responsibility |
-|---|---|
-| `models.py` | `Review` - review with rating 1-5, linked to `User` and `Product` |
-
-### `faq` - Questions and Answers
-
-| File | Responsibility |
-|---|---|
-| `models.py` | `FAQItem` - question-answer with sorting and publication flag |
-
-### `vacancies` - Job Vacancies
-
-| File | Responsibility |
-|---|---|
-| `models.py` | `Vacancy` - vacancy with requirements, conditions, salary |
-
-### Root Files
-
-| File | Responsibility |
-|---|---|
-| `manage.py` | Entry point for Django management commands |
-| `autosalon/settings.py` | Project settings (DB, apps, API keys, media/static) |
-| `autosalon/urls.py` | Root URL routing |
-
----
-
-## Integration Points
-
-### 1. Database
-
-| Environment | DBMS | Location |
-|---|---|---|
-| Development | SQLite | `db.sqlite3` in project root |
-| Production | PostgreSQL | Configured via environment variables / `settings.py` |
-
-**Notes:**
-
-- Django ORM is the only data access layer.
-- Migrations: `python manage.py migrate`.
-- Transactions: `transaction.atomic()` in `checkout.py` and `SaleItem.save()` to ensure order and stock integrity.
-
-### 2. External Services (HTTP APIs)
-
-| Service| Purpose |
-|---|---|
-| **NBRB** | Currency rates USD, EUR, RUB, PLN | 
-| **OpenWeatherMap** | Weather in Minsk |
-
-**Requirements:**
-
-- OpenWeatherMap API key is set in `settings.OPENWEATHER_API_KEY` (or via environment variables).
-- Request timeout - 10 seconds.
-- On error or missing key, returns `None`; templates handle missing data gracefully.
-
-### 3. File System
-
-| Directory | Purpose |
-|---|---|
-| `media/company/` | Company logo (`CompanyInfo.logo`) |
-| `media/employees/` | Employee photos (`Employee.photo`) |
-| `media/news/` | Article images (`Article.image`) |
-| `media/charts/` | Generated charts (`popularity.png` from `statistics.py`) |
-| `static/` | CSS, JS, static images |
-
-**Settings:**
-
-- `MEDIA_ROOT`, `MEDIA_URL` - in `settings.py`.
-- `os.makedirs(..., exist_ok=True)` in `statistics.py` to create `media/charts/`.
-
-### 4. Authentication and Sessions
-
-| Component | Responsibility |
-|---|---|
-| `django.contrib.auth` | Users, groups, permissions |
-| `User` <-> `Customer` | 1:1 link via `OneToOneField` |
-| `LoginRequiredMixin` | Protects `CheckoutView`, `ProfileView`, `OrderHistoryView` |
-| `UserPassesTestMixin` | Restricts `StatisticsView` to `is_superuser` only |
-| Django sessions | Store cart (`request.session['cart']`) and timezone (`user_timezone`) |
-
-### 5. Data Visualization
-
-| Tool | Purpose | File |
-|---|---|---|
-| **Matplotlib** (`Agg`) | Bar chart of product type popularity | `core/views/statistics.py::generate_chart()` |
-| **dateutil.relativedelta** | Age calculation (18+) | `validator.py`, `customers.py`, `auth.py` |
-| **pytz** | Timezone handling | `core/views/calendar.py` |
-
-### 6. Containerization
-
-| File | Purpose |
-|---|---|
-| `Dockerfile` | Application image build |
-| `docker-compose.yml` | Orchestration (web + DB) |
-| Port | `8000` (mapped with `-p 8000:8000`) |
-
----
-
-
-## Installation and Setup
-
-### Local Development
+Из корня репозитория, где находится `manage.py`:
 
 ```bash
-git clone -single-branch --branch vpo https://github.com/KATTSS/Autosalon_shop.git
-cd Autosalon_shop/autosalon
-python -m venv venv
+python3.12 -m venv autosalon_venv
+source autosalon_venv/bin/activate
 pip install -r requirements.txt
-# to get new secret key:
+cp .env.example .env
 python -c "import secrets; print(secrets.token_urlsafe(50))"
-# place newly generated secret key in .env file
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py runserver
 ```
 
-### Docker
+В `.env` замените `SECRET_KEY` выведенным значением и задайте
+`ALLOWED_HOSTS=localhost,127.0.0.1`. `OPENWEATHER_API_KEY` необязателен.
+`DATABASE_URL` и `DEBUG` сейчас не изменяют активные настройки БД/DEBUG:
+они заданы непосредственно в `autosalon/settings.py`.
+В Windows окружение активируется командой `autosalon_venv\Scripts\activate`.
+
+```bash
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py collectstatic --noinput
+python manage.py runserver --insecure
+```
+
+Приложение: [localhost:8000](http://localhost:8000/), admin:
+[localhost:8000/admin](http://localhost:8000/admin/).
+`--insecure` позволяет раздавать static при текущем `DEBUG=False` только для
+локальной разработки. Media по-прежнему требуют отдельной раздачи.
+
+Сборка и запуск контейнера:
 
 ```bash
 docker build -t autosalon .
-docker run -p 8000:8000 autosalon
+docker run --env-file .env -p 8000:8000 autosalon
 ```
 
-### Docker Compose
+Контейнер запускает миграции и Gunicorn. Сборка/запуск на Linux и Windows в этой
+проверке не выполнялись. Есть открытый дефект сборки static:
+[ISSUE-005](ISSUES.md#issue-005). SQLite внутри контейнера не сохраняется после его
+удаления без отдельного тома. Compose запускается `docker compose up --build`,
+но его PostgreSQL пока не используется приложением.
+
+## Требования и тестирование
+
+[DOCS.md](DOCS.md) содержит спецификацию, use case и state-диаграммы и методы
+проверки в таблицах требований. [ISSUES.md](ISSUES.md) фиксирует расхождения с
+реализацией. [TESTING.md](TESTING.md) содержит результаты и проверку заданий.
 
 ```bash
-docker-compose up --build
+python -m pytest
+python -m pytest --shuffle-seed=20261011 --no-cov
 ```
 
-## Hosting
-
-The project is deployed at:
-
-[Hosting link](https://ekatss.pythonanywhere.com/)
-
-## Admin Panel
-
-```
-/admin/
-```
-
-
+Первый запуск измеряет покрытие: минимум 70%, HTML — `htmlcov/index.html`,
+XML — `coverage.xml`. Второй проверяет независимость от порядка.
+Ожидаемые нарушения требований помечены `xfail(strict=True)` и привязаны к
+открытым дефектам: они не считаются выполненными требованиями.
