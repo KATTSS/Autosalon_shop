@@ -272,11 +272,13 @@ User (Django auth) --1:1--> Customer --1:N--> Sale --1:N--> SaleItem
 ### Local Development
 
 ```bash
-git clone https://github.com/KATTSS/Autosalon_shop.git
+git clone -single-branch --branch vpo https://github.com/KATTSS/Autosalon_shop.git
 cd Autosalon_shop/autosalon
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+# to get new secret key:
+python -c "import secrets; print(secrets.token_urlsafe(50))"
+# place newly generated secret key in .env file
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
